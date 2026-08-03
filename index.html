@@ -111,10 +111,6 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 /* ---------------------------------------------------------------------
    DATA — every project pulled from brandonrosewebsites Google Site
@@ -129,63 +125,63 @@ const CATEGORIES = {
 };
 
 const PROJECTS = [
-  { title:"PropertyMax.ai", subtitle:"CEO Command Center MVP", category:"platform", tier:1,
+  { slug:"propertymax-ai", title:"PropertyMax.ai", subtitle:"CEO Command Center MVP", category:"platform", tier:1,
     desc:"Flagship AI-driven property management platform and executive command center prototype.",
     url:"http://propertymax.ai/" },
-  { title:"Operations Hub", subtitle:"ApartmentCorp Operations Hub", category:"operations", tier:1,
+  { slug:"operations-hub", title:"Operations Hub", subtitle:"ApartmentCorp Operations Hub", category:"operations", tier:1,
     desc:"Central operations portal coordinating day-to-day property management workflows.",
     url:"https://operationshub-aptcorp.manus.space/" },
-  { title:"Vacancy Report", subtitle:"Vacancy Report WebApp", category:"operations", tier:1,
+  { slug:"vacancy-report", title:"Vacancy Report", subtitle:"Vacancy Report WebApp", category:"operations", tier:1,
     desc:"Real-time vacancy tracking and reporting web app across the portfolio.",
     url:"https://vacancyapp-42vudntx.manus.space/" },
-  { title:"Investor Summary", subtitle:"Investor Summary Portal", category:"financial", tier:1,
+  { slug:"investor-summary", title:"Investor Summary", subtitle:"Investor Summary Portal", category:"financial", tier:1,
     desc:"Investor-facing performance summary and reporting portal.",
     url:"https://investor-summary.manus.space/" },
-  { title:"Monthly Inspections", subtitle:"Inspections Tracker & Checklist", category:"operations", tier:2,
+  { slug:"monthly-inspections", title:"Monthly Inspections", subtitle:"Inspections Tracker & Checklist", category:"operations", tier:2,
     desc:"Tracker app for monthly property inspection checklists and compliance.",
     url:"https://monthlycheck-tukrskz5.manus.space/" },
-  { title:"Inventory QR", subtitle:"QR Inventory App", category:"operations", tier:2,
+  { slug:"inventory-qr", title:"Inventory QR", subtitle:"QR Inventory App", category:"operations", tier:2,
     desc:"QR-code driven inventory tracking tool for on-site assets.",
     url:"https://brandonrose2.github.io/qr-inventory-app/" },
-  { title:"Cost Segregation", subtitle:"Cost Segregation Study Portal", category:"financial", tier:2,
+  { slug:"cost-segregation", title:"Cost Segregation", subtitle:"Cost Segregation Study Portal", category:"financial", tier:2,
     desc:"Web portal supporting cost segregation studies for tax planning.",
     url:"https://brandonrose2.github.io/cost-segregation-project/" },
-  { title:"Flyer Generator [Manus]", subtitle:"Property Flyer Generator", category:"marketing", tier:2,
+  { slug:"flyer-manus", title:"Flyer Generator [Manus]", subtitle:"Property Flyer Generator", category:"marketing", tier:2,
     desc:"Standalone PropertyMax tool for creating, printing, and downloading referral flyers.",
     url:"https://property-flyer-generator.manus.space/" },
-  { title:"Flyer Generator [Claude]", subtitle:"PropertyMax Flyer Studio", category:"marketing", tier:2,
+  { slug:"flyer-claude", title:"Flyer Generator [Claude]", subtitle:"PropertyMax Flyer Studio", category:"marketing", tier:2,
     desc:"Claude-built variant of the property flyer generator tool.",
     url:"https://brandonrose2.github.io/propertymax-flyer-studio-claude/" },
-  { title:"Loss to Lease", subtitle:"Gates of Manhattan Report", category:"financial", tier:2,
+  { slug:"loss-to-lease", title:"Loss to Lease", subtitle:"Gates of Manhattan Report", category:"financial", tier:2,
     desc:"Loss-to-lease reporting app portal for portfolio performance.",
     url:"https://loss-to-lease.manus.space/portfolio" },
-  { title:"Rental Comps [Claude]", subtitle:"Rental Comps Portal", category:"operations", tier:2,
+  { slug:"rental-comps-claude", title:"Rental Comps [Claude]", subtitle:"Rental Comps Portal", category:"operations", tier:2,
     desc:"Claude-built rental comparables research portal.",
     url:"https://brandonrose2.github.io/claude-rent-comps/" },
-  { title:"Piano Mastery", subtitle:"Piano Composition Mastery", category:"personal", tier:2,
+  { slug:"piano-mastery", title:"Piano Mastery", subtitle:"Piano Composition Mastery", category:"personal", tier:2,
     desc:"Personal project teaching piano composition fundamentals.",
     url:"https://piano-composition-mastery.manus.space" },
-  { title:"EDD Audit Checklist", subtitle:"EDD Prep Checklist Portal", category:"financial", tier:3,
+  { slug:"edd-audit", title:"EDD Audit Checklist", subtitle:"EDD Prep Checklist Portal", category:"financial", tier:3,
     desc:"Checklist portal for EDD audit preparation.",
     url:"https://brandonrose2.github.io/edd-audit-checklist/" },
-  { title:"Report Schedule Builder", subtitle:"Marc's Report Schedule Builder", category:"operations", tier:3,
+  { slug:"report-schedule-builder", title:"Report Schedule Builder", subtitle:"Marc's Report Schedule Builder", category:"operations", tier:3,
     desc:"Custom reporting system schedule builder for regional teams.",
     url:"https://marcreport-ypkstjhu.manus.space/" },
-  { title:"Regional Data Collector", subtitle:"Regional Manager Data Collector", category:"operations", tier:3,
+  { slug:"regional-data-collector", title:"Regional Data Collector", subtitle:"Regional Manager Data Collector", category:"operations", tier:3,
     desc:"Internal data collection tool for regional managers.", url:null },
-  { title:"Property Directory", subtitle:"Property Directory", category:"operations", tier:3,
+  { slug:"property-directory", title:"Property Directory", subtitle:"Property Directory", category:"operations", tier:3,
     desc:"Internal directory of managed properties.", url:null },
-  { title:"Batch File Editor", subtitle:"Batch File Editor", category:"operations", tier:3,
+  { slug:"batch-file-editor", title:"Batch File Editor", subtitle:"Batch File Editor", category:"operations", tier:3,
     desc:"Internal batch file editing utility.", url:null },
-  { title:"New Hire Onboarding", subtitle:"New Hire Onboarding WebApp", category:"operations", tier:3,
+  { slug:"new-hire-onboarding", title:"New Hire Onboarding", subtitle:"New Hire Onboarding WebApp", category:"operations", tier:3,
     desc:"Onboarding workflow app for new hires.", url:null },
-  { title:"Peptides", subtitle:"Peptides WebApp", category:"personal", tier:3,
+  { slug:"peptides", title:"Peptides", subtitle:"Peptides WebApp", category:"personal", tier:3,
     desc:"Personal side-project web app.", url:null },
-  { title:"Company Contacts", subtitle:"Notion Workspace", category:"code", tier:3,
+  { slug:"company-contacts", title:"Company Contacts", subtitle:"Notion Workspace", category:"code", tier:3,
     desc:"Company contacts directory maintained in Notion.", url:null },
-  { title:"Team Workspace", subtitle:"Notion Workspace", category:"code", tier:3,
+  { slug:"team-workspace", title:"Team Workspace", subtitle:"Notion Workspace", category:"code", tier:3,
     desc:"Shared internal team workspace in Notion.", url:null },
-  { title:"GitHub Repos", subtitle:"Repositories", category:"code", tier:3,
+  { slug:"github-repos", title:"GitHub Repos", subtitle:"Repositories", category:"code", tier:3,
     desc:"Source repositories backing these projects.", url:"https://github.com/repos" },
 ];
 
@@ -227,12 +223,6 @@ function markInteracting(){
 }
 controls.addEventListener('start', markInteracting);
 
-/* lighting kept minimal — nodes are emissive, this just lifts the floor/rings */
-scene.add(new THREE.AmbientLight(0x404060, 1.2));
-const key = new THREE.PointLight(0x8fb8ff, 2.2, 40);
-key.position.set(6, 10, 8);
-scene.add(key);
-
 /* starfield — single BufferGeometry, one draw call */
 (function buildStarfield(){
   const COUNT = 1600;
@@ -265,16 +255,39 @@ scene.add(key);
 
 /* ---------------------------------------------------------------------
    NODES — "asymmetric-yield" layout: importance (tier) drives both
-   size and camera proximity, not a uniform grid/sphere.
+   card size and camera proximity, not a uniform grid/sphere. Each node
+   is a pair of camera-facing sprites: a soft category-colored glow
+   behind a live screenshot of the project's homepage.
 --------------------------------------------------------------------- */
 const TIER_CONFIG = {
-  1: { radius: 6,  size: 1.35, y: 1.4 },
-  2: { radius: 10, size: 0.95, y: 0.6 },
-  3: { radius: 14, size: 0.62, y: -0.3 },
+  1: { radius: 6,  width: 3.6, y: 1.5 },
+  2: { radius: 10, width: 2.7, y: 0.6 },
+  3: { radius: 14, width: 1.9, y: -0.3 },
 };
+const CARD_ASPECT = 640 / 960; // matches the 960x640 card textures
+
+const textureLoader = new THREE.TextureLoader();
+const glowTextureCache = {};
+function getGlowTexture(colorHex){
+  if (glowTextureCache[colorHex]) return glowTextureCache[colorHex];
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const r = `${(colorHex >> 16) & 255}, ${(colorHex >> 8) & 255}, ${colorHex & 255}`;
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0, `rgba(${r}, 0.85)`);
+  grad.addColorStop(0.5, `rgba(${r}, 0.35)`);
+  grad.addColorStop(1, `rgba(${r}, 0)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  glowTextureCache[colorHex] = tex;
+  return tex;
+}
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
-const nodes = [];       // { mesh, project, baseScale, baseEmissive }
+const nodes = [];       // { card, glow, project, baseWidth, baseHeight }
 const raycastTargets = [];
 const tierCounts = { 1: 0, 2: 0, 3: 0 };
 
@@ -283,86 +296,42 @@ PROJECTS.forEach(p => {
   const idx = tierCounts[p.tier]++;
   const angle = idx * GOLDEN_ANGLE + p.tier; // offset per tier so rings don't align
   const jitterY = Math.sin(idx * 12.9898) * 0.5;
-
   const color = CATEGORIES[p.category].color;
-  const geometry = new THREE.IcosahedronGeometry(cfg.size, 1);
-  const material = new THREE.MeshStandardMaterial({
-    color, emissive: color, emissiveIntensity: 0.28,
-    metalness: 0.35, roughness: 0.45, flatShading: true,
-  });
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(
+
+  const width = cfg.width;
+  const height = width * CARD_ASPECT;
+  const position = new THREE.Vector3(
     Math.cos(angle) * cfg.radius,
     cfg.y + jitterY,
     Math.sin(angle) * cfg.radius
   );
-  mesh.userData.project = p;
-  mesh.userData.baseY = mesh.position.y;
-  mesh.userData.phase = idx;
-  scene.add(mesh);
-  raycastTargets.push(mesh);
 
-  /* label sprite — canvas texture, billboards automatically */
-  const label = makeLabelSprite(p.title, `#${color.toString(16).padStart(6,'0')}`);
-  label.position.copy(mesh.position);
-  label.position.y += cfg.size + 0.55;
-  label.scale.multiplyScalar(cfg.tier === 1 ? 1 : 0.85);
-  scene.add(label);
+  /* glow — soft radial category-color halo, rendered behind the card */
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: getGlowTexture(color), transparent: true, depthWrite: false,
+  }));
+  const glowSize = Math.max(width, height) * 1.6;
+  glow.scale.set(glowSize, glowSize, 1);
+  glow.position.copy(position);
+  glow.renderOrder = 0;
+  scene.add(glow);
 
-  nodes.push({ mesh, label, project: p, baseScale: cfg.size, baseEmissive: 0.28 });
+  /* card — live screenshot texture, always faces the camera */
+  const card = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: textureLoader.load(`./screenshots/${p.slug}.png`),
+    transparent: true, depthWrite: false,
+  }));
+  card.scale.set(width, height, 1);
+  card.position.copy(position);
+  card.renderOrder = 1;
+  card.userData.project = p;
+  card.userData.baseY = position.y;
+  card.userData.phase = idx;
+  scene.add(card);
+  raycastTargets.push(card);
+
+  nodes.push({ card, glow, project: p, baseWidth: width, baseHeight: height });
 });
-
-function makeLabelSprite(text, colorHex){
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const scale = 4;
-  canvas.width = 512; canvas.height = 128;
-  ctx.scale(1,1);
-  ctx.font = `600 ${34*scale/scale}px Segoe UI, sans-serif`;
-  ctx.font = '600 40px Segoe UI, -apple-system, sans-serif';
-  const metrics = ctx.measureText(text);
-  const paddingX = 28;
-  const w = Math.min(canvas.width, metrics.width + paddingX*2);
-  ctx.clearRect(0,0,canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(6,8,16,0.72)';
-  roundRect(ctx, (canvas.width - w)/2, 34, w, 60, 14);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  ctx.lineWidth = 2;
-  roundRect(ctx, (canvas.width - w)/2, 34, w, 60, 14);
-  ctx.stroke();
-  ctx.fillStyle = '#eef1fb';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, canvas.width/2, 64);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearFilter;
-  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
-  const sprite = new THREE.Sprite(mat);
-  sprite.scale.set(2.6, 0.65, 1);
-  return sprite;
-}
-function roundRect(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y, x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x, y+h, r);
-  ctx.arcTo(x, y+h, x, y, r);
-  ctx.arcTo(x, y, x+w, y, r);
-  ctx.closePath();
-}
-
-/* ---------------------------------------------------------------------
-   POSTPROCESSING — bloom for the neon/emissive look
---------------------------------------------------------------------- */
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.4, 0.35
-);
-composer.addPass(bloom);
-composer.addPass(new OutputPass());
 
 /* ---------------------------------------------------------------------
    INTERACTION — raycast hover + click, category filter, detail panel
@@ -373,7 +342,7 @@ const tooltip = document.getElementById('tooltip');
 const panel = document.getElementById('detail-panel');
 let hovered = null;
 let activeCategory = 'all';
-let selectedMesh = null;
+let selectedCard = null;
 
 function onPointerMove(e){
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -394,10 +363,17 @@ function onPointerMove(e){
   }
 }
 
-function onClick(){
-  if (!hovered) return;
-  selectedMesh = hovered;
-  openPanel(hovered.userData.project);
+function onClick(e){
+  // raycast fresh from the click coordinates rather than relying on
+  // `hovered` — some input paths (touch, synthetic/automation events)
+  // fire click without a preceding pointermove.
+  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hit = raycaster.intersectObjects(raycastTargets, false)[0]?.object ?? null;
+  if (!hit) return;
+  selectedCard = hit;
+  openPanel(hit.userData.project);
 }
 
 renderer.domElement.addEventListener('pointermove', onPointerMove);
@@ -427,7 +403,7 @@ function openPanel(p){
 }
 document.getElementById('closePanel').addEventListener('click', () => {
   panel.classList.remove('open');
-  selectedMesh = null;
+  selectedCard = null;
 });
 
 /* category filter pills */
@@ -461,7 +437,6 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 /* ---------------------------------------------------------------------
@@ -474,30 +449,32 @@ function animate(){
   const t = clock.getElapsedTime();
 
   nodes.forEach(n => {
-    const { mesh, label, project } = n;
-    const isHover = mesh === hovered;
-    const isSelected = mesh === selectedMesh;
+    const { card, glow, project, baseWidth, baseHeight } = n;
+    const isHover = card === hovered;
+    const isSelected = card === selectedCard;
     const matches = activeCategory === 'all' || project.category === activeCategory;
 
-    // gentle bob + rotation per node, phase-offset so they don't sync
-    mesh.position.y = mesh.userData.baseY + Math.sin(t * 0.6 + mesh.userData.phase) * 0.15;
-    mesh.rotation.x += 0.0025;
-    mesh.rotation.y += 0.0035;
-    label.position.y = mesh.position.y + n.baseScale + 0.55;
+    // gentle bob, phase-offset so cards don't move in sync
+    const y = card.userData.baseY + Math.sin(t * 0.6 + card.userData.phase) * 0.15;
+    card.position.y = y;
+    glow.position.y = y;
 
-    const targetScale = (n.baseScale) * (isHover || isSelected ? 1.25 : 1) * (matches ? 1 : 0.7);
-    mesh.scale.lerp(new THREE.Vector3(1,1,1).multiplyScalar(targetScale / n.baseScale), 0.15);
+    const factor = (isHover || isSelected ? 1.16 : 1) * (matches ? 1 : 0.72);
+    card.scale.x += (baseWidth * factor - card.scale.x) * 0.15;
+    card.scale.y += (baseHeight * factor - card.scale.y) * 0.15;
+    const glowBase = Math.max(baseWidth, baseHeight) * 1.6;
+    glow.scale.x += (glowBase * factor - glow.scale.x) * 0.15;
+    glow.scale.y += (glowBase * factor - glow.scale.y) * 0.15;
 
-    const targetEmissive = (isHover || isSelected ? 1.4 : n.baseEmissive) * (matches ? 1 : 0.25);
-    mesh.material.emissiveIntensity += (targetEmissive - mesh.material.emissiveIntensity) * 0.15;
+    const targetCardOpacity = matches ? 1 : 0.3;
+    card.material.opacity += (targetCardOpacity - card.material.opacity) * 0.15;
 
-    const targetOpacity = matches ? 1 : 0.25;
-    label.material.opacity += (targetOpacity - label.material.opacity) * 0.15;
-    label.material.transparent = true;
+    const targetGlowOpacity = (isHover || isSelected ? 1 : 0.6) * (matches ? 1 : 0.2);
+    glow.material.opacity += (targetGlowOpacity - glow.material.opacity) * 0.15;
   });
 
   controls.update();
-  composer.render();
+  renderer.render(scene, camera);
 }
 animate();
 </script>
