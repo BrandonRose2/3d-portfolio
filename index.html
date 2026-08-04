@@ -86,8 +86,12 @@
   }
   #music-control input:focus{outline:none;border-color:rgba(255,255,255,0.35);}
   #music-status{font-size:11px;color:var(--text-dim);flex-basis:100%;}
-  #music-player-container{display:none;position:fixed;bottom:28px;left:28px;z-index:15;pointer-events:auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:opacity 0.3s ease;}
-  body.edit-mode #music-player-container{display:block;}
+  /* The Spotify controller is present for visitor playback but has no visible homepage box. */
+  #music-player-container{position:fixed;left:-9999px;bottom:0;width:1px;height:1px;z-index:-1;
+    opacity:0;pointer-events:none;overflow:hidden;border-radius:12px;transition:opacity .3s ease;}
+  body.edit-mode #music-player-container{left:28px;bottom:28px;width:300px;height:80px;z-index:15;
+    opacity:1;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  #music-player-container iframe{display:block;border:0;}
 
   #filters{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto;}
   .pill{padding:8px 18px;border-radius:999px;font-size:13px;font-weight:500;
@@ -759,7 +763,7 @@ function rebuildScene(){
   // A saved edit replaces the old sprites; do not retain a disposed selected or hovered card.
   selectedCard = null;
   hovered = null;
-  panel.classList.remove('open');
+  clearDetailPanel();
   nodes.forEach(disposeNode);
   nodes.length = 0;
   raycastTargets.length = 0;
@@ -836,6 +840,7 @@ const panel = document.getElementById('detail-panel');
 let hovered = null;
 let activeCategory = 'all';
 let selectedCard = null;
+let pointerDownPosition = null;
 
 function onPointerMove(e){
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -856,10 +861,17 @@ function onPointerMove(e){
   }
 }
 
+function onPointerDown(e){
+  pointerDownPosition = { x: e.clientX, y: e.clientY };
+  markInteracting();
+}
+
 function onClick(e){
-  // raycast fresh from the click coordinates rather than relying on
-  // `hovered` — some input paths (touch, synthetic/automation events)
-  // fire click without a preceding pointermove.
+  // A drag to orbit must never be interpreted as a project-card click.
+  const startedHere = pointerDownPosition;
+  pointerDownPosition = null;
+  if (!startedHere || Math.hypot(e.clientX - startedHere.x, e.clientY - startedHere.y) > 8) return;
+  // Raycast fresh from the click coordinates rather than relying on `hovered`.
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
@@ -869,12 +881,13 @@ function onClick(e){
     openEditForm(hit.userData.project);
   } else {
     selectedCard = hit;
-    openPanel(hit.userData.project);
+    // The right sidebar may only be populated from this explicit card click.
+    openPanel(hit.userData.project, 'card-click');
   }
 }
 
 renderer.domElement.addEventListener('pointermove', onPointerMove);
-renderer.domElement.addEventListener('pointerdown', markInteracting);
+renderer.domElement.addEventListener('pointerdown', onPointerDown);
 renderer.domElement.addEventListener('click', onClick);
 
 function fillList(ul, items){
@@ -886,7 +899,26 @@ function fillList(ul, items){
   });
 }
 
-function openPanel(p){
+function clearDetailPanel(){
+  panel.classList.remove('open');
+  panel.removeAttribute('data-project-slug');
+  document.getElementById('d-cat').textContent = '';
+  document.getElementById('d-title').textContent = '';
+  document.getElementById('d-subtitle').textContent = '';
+  document.getElementById('d-desc').textContent = '';
+  document.getElementById('d-built').textContent = '';
+  document.getElementById('d-features').replaceChildren();
+  document.getElementById('d-howto').textContent = '';
+  const launch = document.getElementById('d-launch');
+  launch.removeAttribute('href');
+  launch.classList.add('disabled');
+  launch.setAttribute('aria-disabled', 'true');
+}
+
+function openPanel(p, source){
+  // Defensive guard: carousel motion, hovering, saved-preview focus, and
+  // keyboard or programmatic state changes must never populate this panel.
+  if (source !== 'card-click') return;
   editPanel.classList.remove('open');
   const cat = CATEGORIES[p.category];
   document.getElementById('d-cat').textContent = cat?.label ?? p.category;
@@ -918,10 +950,11 @@ function openPanel(p){
     launch.classList.add('disabled');
     launch.setAttribute('aria-disabled', 'true');
   }
+  panel.dataset.projectSlug = p.slug;
   panel.classList.add('open');
 }
 document.getElementById('closePanel').addEventListener('click', () => {
-  panel.classList.remove('open');
+  clearDetailPanel();
   selectedCard = null;
   markInteracting();
 });
@@ -949,7 +982,7 @@ function slugify(str, ignoreProject){
 }
 
 function openEditForm(project){
-  panel.classList.remove('open');
+  clearDetailPanel();
   editingProject = project;
   document.getElementById('edit-heading').textContent = project ? 'Edit Project' : 'Add Project';
   document.getElementById('f-title').value = project?.title || '';
@@ -1199,16 +1232,75 @@ function parseSpotifyLink(link){
   return match ? { type: match[1], id: match[2] } : null;
 }
 
-function renderMusicPlayer(){
+let spotifyController = null;
+let spotifyApiPromise = null;
+let soundtrackStarted = false;
+let soundtrackGestureArmed = false;
+
+function loadSpotifyIframeApi(){
+  if (spotifyApiPromise) return spotifyApiPromise;
+  spotifyApiPromise = new Promise((resolve, reject) => {
+    window.onSpotifyIframeApiReady = (IFrameAPI) => resolve(IFrameAPI);
+    const existing = document.querySelector('script[data-spotify-iframe-api]');
+    if (existing) return;
+    const script = document.createElement('script');
+    script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+    script.async = true;
+    script.dataset.spotifyIframeApi = 'true';
+    script.onerror = () => reject(new Error('Spotify player API could not load'));
+    document.head.appendChild(script);
+  });
+  return spotifyApiPromise;
+}
+
+function attemptSoundtrackPlayback(){
+  if (!spotifyController || soundtrackStarted) return;
+  try { spotifyController.play(); } catch(e) { /* browser will retry after first interaction */ }
+}
+
+function armSoundtrackGestureFallback(){
+  if (soundtrackGestureArmed) return;
+  soundtrackGestureArmed = true;
+  const retry = () => attemptSoundtrackPlayback();
+  // A user gesture satisfies browsers that block unmuted autoplay.
+  window.addEventListener('pointerdown', retry, { once: true, capture: true });
+  window.addEventListener('keydown', retry, { once: true, capture: true });
+}
+
+async function renderMusicPlayer(){
   const parsed = parseSpotifyLink(SITE_CONFIG.spotifyUrl);
-  // The embedded player is a private owner preview, never a public homepage element.
-  if (!editMode || !parsed){
+  soundtrackStarted = false;
+  if (spotifyController?.destroy) spotifyController.destroy();
+  spotifyController = null;
+  playerContainer.replaceChildren();
+  if (!parsed) return;
+
+  const mount = document.createElement('div');
+  mount.id = 'spotify-embed-root';
+  playerContainer.appendChild(mount);
+  try {
+    const IFrameAPI = await loadSpotifyIframeApi();
+    // The controller remains visually hidden for visitors and becomes visible only in Edit Mode.
+    IFrameAPI.createController(mount, {
+      uri: `spotify:${parsed.type}:${parsed.id}`,
+      width: 300,
+      height: 80,
+    }, (controller) => {
+      spotifyController = controller;
+      // Attempt on controller creation as well as the ready event because the
+      // event can precede listener registration in some browser timings.
+      attemptSoundtrackPlayback();
+      armSoundtrackGestureFallback();
+      controller.addListener('ready', () => {
+        attemptSoundtrackPlayback();
+        armSoundtrackGestureFallback();
+      });
+      controller.addListener('playback_started', () => { soundtrackStarted = true; });
+    });
+  } catch(e) {
+    // The background experience remains usable if Spotify is unavailable.
     playerContainer.replaceChildren();
-    playerContainer.style.opacity = '0';
-    return;
   }
-  playerContainer.innerHTML = `<iframe title="Portfolio soundtrack" style="border-radius:12px" src="https://open.spotify.com/embed/${parsed.type}/${parsed.id}?utm_source=generator&theme=0" width="300" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
-  playerContainer.style.opacity = '1';
 }
 
 function updateMusicStatus(){
