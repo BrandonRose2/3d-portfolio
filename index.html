@@ -86,7 +86,8 @@
   }
   #music-control input:focus{outline:none;border-color:rgba(255,255,255,0.35);}
   #music-status{font-size:11px;color:var(--text-dim);flex-basis:100%;}
-  #music-player-container{position:fixed;bottom:28px;left:28px;z-index:15;pointer-events:auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:opacity 0.3s ease;}
+  #music-player-container{display:none;position:fixed;bottom:28px;left:28px;z-index:15;pointer-events:auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:opacity 0.3s ease;}
+  body.edit-mode #music-player-container{display:block;}
 
   #filters{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto;}
   .pill{padding:8px 18px;border-radius:999px;font-size:13px;font-weight:500;
@@ -196,7 +197,7 @@
       </div>
       <button class="pill liquid-glass" id="editToggle">✎ Edit Mode</button>
     </div>
-    <div id="music-control" aria-label="Default visitor soundtrack settings">
+    <div id="music-control" aria-label="Owner soundtrack configuration">
       <input type="text" id="spotify-link" placeholder="Paste the site-wide Spotify song, album, or playlist link..." />
       <button class="pill liquid-glass" id="save-spotify">Set Default Soundtrack</button>
       <button class="pill liquid-glass" id="export-music-settings">Export music setting</button>
@@ -529,6 +530,7 @@ const TIER_CONFIG = {
 const CARD_ASPECT = 640 / 960; // matches the 960x640 card textures
 
 const textureLoader = new THREE.TextureLoader();
+textureLoader.setCrossOrigin('anonymous');
 const glowTextureCache = {};
 function getGlowTexture(colorHex){
   if (glowTextureCache[colorHex]) return glowTextureCache[colorHex];
@@ -628,18 +630,35 @@ function shouldUseUrlPreview(p){
   return !p.image && /Internal tool — no public deployment/.test(p.builtWith || '');
 }
 
+function getLiveThumbnailUrl(url){
+  try {
+    const target = new URL(url);
+    if (!['https:', 'http:'].includes(target.protocol)) return null;
+    // CORS-enabled thumbnail service: a live URL gets a true website preview,
+    // while the generated card below remains visible if the thumbnail cannot load.
+    return `https://image.thum.io/get/width/960/crop/640/noanimate/${target.href}`;
+  } catch(e) {
+    return null;
+  }
+}
+
 function applyPreviewTexture(card, p){
   const useUrlPreview = shouldUseUrlPreview(p);
-  // Start with a generated preview immediately; never show a blank card while an image loads.
+  // Always start with a generated card; this prevents the blank-state failure even
+  // when a site blocks capture, is private, or an image request is still pending.
   card.material.map = useUrlPreview ? makeUrlPreviewTexture(p) : makePlaceholderTexture(p);
   card.material.needsUpdate = true;
-  if (useUrlPreview) return;
 
-  const imageUrl = p.image || `./screenshots/${p.slug}.png`;
+  const imageUrl = useUrlPreview
+    ? getLiveThumbnailUrl(p.url)
+    : (p.image || `./screenshots/${p.slug}.png`);
+  if (!imageUrl) return;
+
   textureLoader.load(
     imageUrl,
     (texture) => {
       if (card.userData.project !== p) { texture.dispose(); return; }
+      texture.colorSpace = THREE.SRGBColorSpace;
       const previousTexture = card.material.map;
       card.material.map = texture;
       card.material.needsUpdate = true;
@@ -647,7 +666,7 @@ function applyPreviewTexture(card, p){
     },
     undefined,
     () => {
-      // Keep the already-rendered generated preview if the file or remote image is unavailable.
+      // Keep the generated live-link card if a remote site blocks capture or the image is unavailable.
       card.material.needsUpdate = true;
     }
   );
@@ -972,6 +991,8 @@ editToggleBtn.addEventListener('click', () => {
     spotifyInput.value = SITE_CONFIG.spotifyUrl || '';
     updateMusicStatus();
   }
+  // Do not leave a Spotify iframe or player box on the public page.
+  renderMusicPlayer();
 });
 updateDraftBadge();
 
@@ -1105,9 +1126,8 @@ const clock = new THREE.Clock();
   }
 
 /* ---------------------------------------------------------------------
-   DEFAULT SPOTIFY SOUNDTRACK — site owners set the URL in Edit Mode.
-   The published site reads site-config.json so every visitor sees one
-   consistent player; browser autoplay policies still require a play click.
+   OWNER-ONLY SPOTIFY CONFIGURATION — the site owner may store a default
+   link in Edit Mode, but visitors never see a player or music control.
 --------------------------------------------------------------------- */
 const spotifyInput = document.getElementById('spotify-link');
 const saveSpotifyBtn = document.getElementById('save-spotify');
@@ -1122,7 +1142,8 @@ function parseSpotifyLink(link){
 
 function renderMusicPlayer(){
   const parsed = parseSpotifyLink(SITE_CONFIG.spotifyUrl);
-  if (!parsed){
+  // The embedded player is a private owner preview, never a public homepage element.
+  if (!editMode || !parsed){
     playerContainer.replaceChildren();
     playerContainer.style.opacity = '0';
     return;
@@ -1134,8 +1155,8 @@ function renderMusicPlayer(){
 function updateMusicStatus(){
   const parsed = parseSpotifyLink(SITE_CONFIG.spotifyUrl);
   musicStatus.textContent = parsed
-    ? `Default ${parsed.type} soundtrack is set. Export site-config.json to publish this setting.`
-    : 'No default soundtrack is set yet.';
+    ? `Default ${parsed.type} is stored for the site configuration. Export site-config.json to publish this setting.`
+    : 'No default soundtrack is stored yet.';
 }
 
 function saveDefaultSoundtrack(){
