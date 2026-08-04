@@ -357,8 +357,9 @@ scene.fog = new THREE.FogExp2(0x030308, 0.028);
 const camera = new THREE.PerspectiveCamera(
   45, window.innerWidth / window.innerHeight, 0.1, 80
 );
-// Lower, more cinematic angle looking slightly up at the carousel
-camera.position.set(0, 1.6, 25.5);
+// Reference framing: a closer, lower opening view that puts the app gallery
+// across the lower stage while preserving the rose and piano above it.
+camera.position.set(0, 1.25, 23.0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setClearColor(0x000000, 0);
@@ -373,14 +374,14 @@ controls.enablePan = false;
 controls.enableZoom = true;
 controls.zoomSpeed = 0.28;
 // Keep the carousel large enough to read, but prevent app previews from clipping at close range.
-controls.minDistance = 22;
+controls.minDistance = 20;
 controls.maxDistance = 34;
 // Restrict vertical rotation to keep the cinematic horizon intact.
 controls.minPolarAngle = Math.PI * 0.38;
 controls.maxPolarAngle = Math.PI * 0.62;
 // Camera auto-rotation must remain off: only the card group drifts.
 controls.autoRotate = false;
-controls.target.set(0, 0.5, 0);
+controls.target.set(0, -0.1, 0);
 
 // Idle-based carousel motion: pause for drag, wheel, or pinch interaction, then resume cleanly.
 let idleTimer = null;
@@ -841,6 +842,8 @@ let hovered = null;
 let activeCategory = 'all';
 let selectedCard = null;
 let pointerDownPosition = null;
+let pointerDownCard = null;
+const SIDEBAR_CLICK_TOLERANCE = 5;
 
 function onPointerMove(e){
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -861,21 +864,30 @@ function onPointerMove(e){
   }
 }
 
+function cardAtPointerEvent(e){
+  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  return raycaster.intersectObjects(raycastTargets, false)[0]?.object ?? null;
+}
+
 function onPointerDown(e){
   pointerDownPosition = { x: e.clientX, y: e.clientY };
+  // The details panel can only open if pointer-down and pointer-up both occur
+  // over the same card with virtually no drag movement.
+  pointerDownCard = cardAtPointerEvent(e);
   markInteracting();
 }
 
 function onClick(e){
-  // A drag to orbit must never be interpreted as a project-card click.
   const startedHere = pointerDownPosition;
+  const startedOnCard = pointerDownCard;
   pointerDownPosition = null;
-  if (!startedHere || Math.hypot(e.clientX - startedHere.x, e.clientY - startedHere.y) > 8) return;
-  // Raycast fresh from the click coordinates rather than relying on `hovered`.
-  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(pointer, camera);
-  const hit = raycaster.intersectObjects(raycastTargets, false)[0]?.object ?? null;
+  pointerDownCard = null;
+  if (!startedHere || !startedOnCard) return;
+  if (Math.hypot(e.clientX - startedHere.x, e.clientY - startedHere.y) > SIDEBAR_CLICK_TOLERANCE) return;
+  const hit = cardAtPointerEvent(e);
+  if (hit !== startedOnCard) return;
   if (!hit) return;
   if (editMode){
     openEditForm(hit.userData.project);
