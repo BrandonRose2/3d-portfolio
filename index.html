@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Brandon Rose — Portfolio Constellation</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+
   :root{
     --bg:#030308;
     --panel-bg: rgba(10,12,20,0.65);
@@ -21,10 +23,36 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;width:100%;height:100%;background:var(--bg);overflow:hidden;
     font-family:'Segoe UI',ui-sans-serif,system-ui,-apple-system,sans-serif;color:var(--text);}
-  #bg-art-wrap{position:fixed;inset:0;z-index:0;opacity:0.22;overflow:hidden;}
-  #bg-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%;}
-  #bg-art-wrap::after{content:'';position:absolute;inset:0;
-    background:radial-gradient(ellipse at 50% 38%, transparent 30%, var(--bg) 90%);}
+  /* Static surreal stage — the app/site carousel is the only moving layer. */
+  #bg-art{position:fixed;inset:0;z-index:0;overflow:hidden;
+    background:url('./assets/dali-bg.jpg') center 42%/cover no-repeat;pointer-events:none;}
+  #bg-art::after{content:'';position:absolute;inset:0;z-index:1;
+    background:radial-gradient(ellipse at 50% 42%, rgba(3,3,8,0) 4%, rgba(3,3,8,0.26) 58%, rgba(3,3,8,0.76) 100%),
+               linear-gradient(180deg, rgba(3,3,8,0.16), rgba(3,3,8,0.44));}
+
+  /* Liquid Glass Base */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
   #scene-container{position:fixed;inset:0;z-index:1;}
   #scene-container canvas{display:block;cursor:grab;}
   #scene-container canvas.hovering{cursor:pointer;}
@@ -32,17 +60,26 @@
   #hud{position:fixed;top:0;left:0;right:0;padding:24px 28px;pointer-events:none;
     display:flex;flex-direction:column;gap:14px;z-index:10;}
   #hud .title-block{pointer-events:none;}
-  #hud h1{margin:0;font-size:22px;font-weight:600;letter-spacing:0.5px;}
-  #hud h1 span{color:var(--text-dim);font-weight:400;}
+  #hud h1{margin:0;font-family:'Instrument Serif', serif;font-size:38px;font-weight:400;letter-spacing:0;color:#fff;}
+  #hud h1 span{font-family:'Segoe UI',system-ui,sans-serif;font-size:16px;color:var(--text-dim);font-weight:400;display:block;margin-top:2px;}
   #hud .hint{margin:2px 0 0;font-size:12px;color:var(--text-dim);}
 
+  #music-control{display:flex;align-items:center;gap:12px;pointer-events:auto;margin-top:12px;}
+  #music-control input{
+    font:inherit;font-size:13px;color:var(--text);background:rgba(255,255,255,0.06);
+    border:1px solid var(--panel-border);border-radius:999px;padding:6px 14px;width:240px;
+    transition:border-color .15s ease;
+  }
+  #music-control input:focus{outline:none;border-color:rgba(255,255,255,0.35);}
+  #music-player-container{position:fixed;bottom:28px;left:28px;z-index:15;pointer-events:auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:opacity 0.3s ease;}
+
   #filters{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto;}
-  .pill{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500;
-    background:var(--panel-bg);border:1px solid var(--panel-border);color:var(--text);
-    cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    display:flex;align-items:center;gap:7px;transition:transform .15s ease, border-color .15s ease;}
-  .pill:hover{transform:translateY(-1px);}
-  .pill.active{border-color:rgba(255,255,255,0.35);}
+  .pill{padding:8px 18px;border-radius:999px;font-size:13px;font-weight:500;
+    color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;
+    transition:transform .15s ease, background .15s ease;}
+  .pill.liquid-glass{background:rgba(255,255,255,0.02);}
+  .pill:hover{background:rgba(255,255,255,0.05);transform:translateY(-1px);}
+  .pill.active{background:rgba(255,255,255,0.08);box-shadow:inset 0 1px 1px rgba(255,255,255,0.15);}
   .pill .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
   #tooltip{position:fixed;pointer-events:none;z-index:15;padding:6px 10px;border-radius:8px;
@@ -50,16 +87,6 @@
     color:var(--text);transform:translate(-50%,-140%);opacity:0;transition:opacity .12s ease;
     white-space:nowrap;}
   #tooltip.show{opacity:1;}
-
-  #hover-preview{position:fixed;right:24px;bottom:24px;z-index:16;width:340px;
-    pointer-events:none;opacity:0;transform:translateY(8px);
-    transition:opacity .18s ease, transform .18s ease;
-    background:var(--panel-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    border:1px solid rgba(212,175,55,0.5);border-radius:14px;overflow:hidden;
-    box-shadow:0 12px 32px rgba(0,0,0,0.5);}
-  #hover-preview.show{opacity:1;transform:translateY(0);}
-  #hover-preview img{width:100%;display:block;aspect-ratio:960/640;object-fit:cover;}
-  #hover-preview-title{padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);}
 
   #editToggle{margin-left:auto;pointer-events:auto;}
   #editToggle.active{background:#fff;color:#0a0a12;border-color:#fff;}
@@ -71,23 +98,14 @@
     background:var(--panel-bg);border:1px solid var(--panel-border);color:var(--text);
     cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
   #editToolbar button:hover{border-color:rgba(255,255,255,0.35);}
-  #spotifyInput{padding:6px 12px;border-radius:999px;font-size:12px;width:220px;
-    background:var(--panel-bg);border:1px solid var(--panel-border);color:var(--text);
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
-  #spotifyInput:focus{outline:none;border-color:rgba(255,255,255,0.35);}
-  #spotifyInput::placeholder{color:var(--text-dim);}
-
-  #music-player{position:fixed;left:20px;bottom:20px;z-index:19;display:none;
-    border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
-  #music-player.visible{display:block;}
   #addProjectBtn{display:none;position:fixed;right:28px;bottom:28px;z-index:19;padding:14px 20px;
     border-radius:999px;background:#fff;color:#0a0a12;font-weight:600;font-size:14px;border:none;
     cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
   body.edit-mode #addProjectBtn{display:block;}
 
-  .side-panel{position:fixed;top:0;right:0;height:100%;width:360px;max-width:88vw;
-    background:var(--panel-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    border-left:1px solid var(--panel-border);z-index:20;
+  .side-panel{position:fixed;top:0;right:0;height:100%;width:380px;max-width:88vw;
+    background:rgba(5,7,12,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    border-left:1px solid rgba(255,255,255,0.08);z-index:20;
     transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.9,.25,1);
     padding:28px 26px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
   .side-panel.open{transform:translateX(0);}
@@ -98,7 +116,7 @@
   #detail-panel .cat-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;
     text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-top:26px;}
   #detail-panel .cat-badge .dot{width:8px;height:8px;border-radius:50%;}
-  #detail-panel h2{margin:6px 0 0;font-size:24px;font-weight:600;}
+  #detail-panel h2{margin:6px 0 0;font-family:'Instrument Serif', serif;font-size:42px;font-weight:400;line-height:1.1;color:#fff;}
   #detail-panel .subtitle{margin:0;font-size:13px;color:var(--text-dim);}
   #detail-panel p.desc{margin:10px 0 0;font-size:14px;line-height:1.55;color:#c7cede;}
   #detail-panel a.launch{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;
@@ -152,11 +170,7 @@
 </head>
 <body>
 
-  <div id="bg-art-wrap">
-    <video id="bg-art" autoplay muted loop playsinline poster="./assets/dali-bg.jpg">
-      <source src="./assets/dali-bg.mp4" type="video/mp4">
-    </video>
-  </div>
+  <div id="bg-art" aria-hidden="true"></div>
   <div id="scene-container"></div>
 
   <div id="hud">
@@ -165,31 +179,26 @@
         <h1>Brandon Rose <span>— Portfolio Constellation</span></h1>
         <p class="hint">Drag to orbit · Scroll to zoom · Click a node to open a project</p>
       </div>
-      <button class="pill" id="editToggle">✎ Edit Mode</button>
+      <button class="pill liquid-glass" id="editToggle">✎ Edit Mode</button>
+    </div>
+    <div id="music-control">
+      <input type="text" id="spotify-link" placeholder="Paste a Spotify song or playlist link..." />
+      <button class="pill liquid-glass" id="play-spotify">Play</button>
     </div>
     <div id="filters"></div>
     <div id="editToolbar">
       <span class="draft-badge" id="draftBadge"></span>
-      <input id="spotifyInput" type="text" placeholder="Paste a Spotify track/playlist link" />
-      <button id="spotifyApply">Set Music</button>
       <button id="exportBtn">Export projects.json</button>
-      <button id="exportConfigBtn">Export site-config.json</button>
       <button id="resetBtn">Reset to published</button>
     </div>
   </div>
 
   <div id="tooltip"></div>
-
-  <div id="hover-preview">
-    <img id="hover-preview-img" alt="" />
-    <div id="hover-preview-title"></div>
-  </div>
-
-  <div id="music-player"></div>
+  <div id="music-player-container" style="opacity: 0;"></div>
 
   <button id="addProjectBtn">+ Add Project</button>
 
-  <div id="detail-panel" class="side-panel">
+  <div id="detail-panel" class="side-panel liquid-glass">
     <button class="close-btn" id="closePanel" aria-label="Close">✕</button>
     <div class="cat-badge"><span class="dot"></span><span id="d-cat"></span></div>
     <h2 id="d-title"></h2>
@@ -210,7 +219,7 @@
     <a class="launch" id="d-launch" target="_blank" rel="noopener noreferrer">Launch App ↗</a>
   </div>
 
-  <div id="edit-panel" class="side-panel">
+  <div id="edit-panel" class="side-panel liquid-glass">
     <button class="close-btn" id="closeEditPanel" aria-label="Close">✕</button>
     <h2 id="edit-heading">Add Project</h2>
     <label>Title
@@ -292,58 +301,23 @@ async function loadProjects(){
   return DEFAULT_PROJECTS;
 }
 
-const SITE_CONFIG_KEY = 'portfolio_site_config_v1';
-let SITE_CONFIG = { spotifyUrl: '' };
-
-async function loadSiteConfig(){
-  const saved = localStorage.getItem(SITE_CONFIG_KEY);
-  if (saved){
-    try { return JSON.parse(saved); } catch(e) { /* corrupt draft, ignore */ }
-  }
-  try {
-    const res = await fetch('./site-config.json', { cache: 'no-store' });
-    if (res.ok) return await res.json();
-  } catch(e) { /* fetch unavailable, e.g. opened via file:// */ }
-  return { spotifyUrl: '' };
-}
-
-/* accepts a Spotify share link (track/album/playlist/episode/show,
-   with or without an intl-xx locale segment or query string) and
-   returns an embeddable player URL, or null if it doesn't match */
-function parseSpotifyEmbedUrl(url){
-  if (!url) return null;
-  const m = url.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(track|album|playlist|episode|show)\/([a-zA-Z0-9]+)/);
-  if (!m) return null;
-  return `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`;
-}
-
-function renderMusicPlayer(){
-  const el = document.getElementById('music-player');
-  const embedUrl = parseSpotifyEmbedUrl(SITE_CONFIG.spotifyUrl);
-  if (embedUrl){
-    el.innerHTML = `<iframe src="${embedUrl}" width="300" height="80" frameborder="0"
-      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
-    el.classList.add('visible');
-  } else {
-    el.innerHTML = '';
-    el.classList.remove('visible');
-  }
-}
-
 /* ---------------------------------------------------------------------
    SCENE — bare-minimum geometry, tight camera bounds, fog for depth cue
 --------------------------------------------------------------------- */
 const container = document.getElementById('scene-container');
 
 const scene = new THREE.Scene();
+const carouselGroup = new THREE.Group();
+scene.add(carouselGroup);
 // background left transparent (no scene.background) so the #bg-art
 // artwork behind the canvas shows through in empty space
 scene.fog = new THREE.FogExp2(0x030308, 0.028);
 
 const camera = new THREE.PerspectiveCamera(
-  50, window.innerWidth / window.innerHeight, 0.1, 60
+  45, window.innerWidth / window.innerHeight, 0.1, 80
 );
-camera.position.set(0, 7, 24);
+// Lower, more cinematic angle looking slightly up at the carousel
+camera.position.set(0, 2, 28);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setClearColor(0x000000, 0);
@@ -353,29 +327,31 @@ container.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.minDistance = 6;
-controls.maxDistance = 32;
-controls.maxPolarAngle = Math.PI * 0.85;
-const PREFERS_REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-controls.autoRotate = !PREFERS_REDUCED_MOTION;
-controls.autoRotateSpeed = 0.35;
-controls.target.set(0, 1.2, 0);
+controls.dampingFactor = 0.08;
+controls.enablePan = false;
+controls.enableZoom = true;
+controls.zoomSpeed = 0.28;
+// Keep the carousel large enough to read, but prevent app previews from clipping at close range.
+controls.minDistance = 22;
+controls.maxDistance = 34;
+// Restrict vertical rotation to keep the cinematic horizon intact.
+controls.minPolarAngle = Math.PI * 0.38;
+controls.maxPolarAngle = Math.PI * 0.62;
+controls.autoRotate = false; // We manually rotate the carouselGroup instead
+controls.target.set(0, 0.5, 0);
 
-// idle-based autorotate: pause while user is interacting, resume after 2.5s
+// Idle-based carousel motion: pause for drag, wheel, or pinch interaction, then resume cleanly.
 let idleTimer = null;
 function markInteracting(){
   controls.autoRotate = false;
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => { if (!PREFERS_REDUCED_MOTION) controls.autoRotate = true; }, 2500);
+  idleTimer = setTimeout(() => {
+    idleTimer = null;
+    if (!selectedCard) controls.autoRotate = true;
+  }, 2200);
 }
 controls.addEventListener('start', markInteracting);
-
-if (PREFERS_REDUCED_MOTION){
-  const bgVideo = document.getElementById('bg-art');
-  bgVideo.removeAttribute('autoplay');
-  bgVideo.pause();
-}
+renderer.domElement.addEventListener('wheel', markInteracting, { passive: true });
 
 /* starfield — single BufferGeometry, one draw call */
 (function buildStarfield(){
@@ -407,39 +383,29 @@ if (PREFERS_REDUCED_MOTION){
   scene.add(ring);
 });
 
-/* THE GOLDEN ROSE — the literal centerpiece the whole constellation
-   orbits around, sitting at the ring system's pivot point (matches
-   controls.target below) so every card visibly circles it. */
-const ROSE_CENTER = new THREE.Vector3(0, 1.2, 0);
-(function addGoldenRose(){
+/* "the rose as a lamp" — a warm glow sitting above the cluster, aligned
+   with the rose in the ./assets/dali-bg.jpg backdrop, so the constellation
+   of project cards reads as if lit from that point overhead */
+(function addLampGlow(){
   const size = 512;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  grad.addColorStop(0,   'rgba(255, 221, 130, 0.55)');
-  grad.addColorStop(0.4, 'rgba(255, 191, 90, 0.18)');
-  grad.addColorStop(1,   'rgba(255, 191, 90, 0)');
+  grad.addColorStop(0,   'rgba(255, 214, 170, 0.4)');
+  grad.addColorStop(0.4, 'rgba(255, 170, 110, 0.12)');
+  grad.addColorStop(1,   'rgba(255, 170, 110, 0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
 
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+  const lamp = new THREE.Sprite(new THREE.SpriteMaterial({
     map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false,
     blending: THREE.AdditiveBlending, fog: false,
   }));
-  glow.scale.set(10, 10, 1);
-  glow.position.copy(ROSE_CENTER);
-  glow.renderOrder = -1;
-  scene.add(glow);
-
-  const rose = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: new THREE.TextureLoader().load('./assets/golden-rose.png'),
-    transparent: true, depthWrite: false, fog: false,
-  }));
-  rose.scale.set(6.5, 6.5, 1);
-  rose.position.copy(ROSE_CENTER);
-  rose.renderOrder = 0;
-  scene.add(rose);
+  lamp.scale.set(11, 11, 1);
+  lamp.position.set(0, 12, -3);
+  lamp.renderOrder = -1;
+  scene.add(lamp);
 })();
 
 /* ---------------------------------------------------------------------
@@ -449,13 +415,13 @@ const ROSE_CENTER = new THREE.Vector3(0, 1.2, 0);
    behind a live screenshot of the project's homepage.
 --------------------------------------------------------------------- */
 const TIER_CONFIG = {
-  1: { radius: 7.5, width: 2.6, y: 1.7 },
-  2: { radius: 11,  width: 2.0, y: 0.9 },
-  3: { radius: 15,  width: 1.4, y: 0.0 },
+  1: { radius: 14, width: 3.6, y: 0.35 },
+  2: { radius: 14, width: 2.9, y: 0 },
+  3: { radius: 14, width: 2.2, y: -0.35 },
 };
-const PETAL_W = 620, PETAL_H = 800;
-const CARD_ASPECT = PETAL_H / PETAL_W; // portrait petal shape
+const CARD_ASPECT = 640 / 960; // matches the 960x640 card textures
 
+const textureLoader = new THREE.TextureLoader();
 const glowTextureCache = {};
 function getGlowTexture(colorHex){
   if (glowTextureCache[colorHex]) return glowTextureCache[colorHex];
@@ -475,101 +441,71 @@ function getGlowTexture(colorHex){
   return tex;
 }
 
-/* the petal outline — a rounded teardrop, point at the base (bottom)
-   where it "attaches" to the rose, rounded lobe at the top */
-function petalPath(ctx, w, h){
-  ctx.beginPath();
-  ctx.moveTo(w * 0.5, h * 0.99);
-  ctx.bezierCurveTo(w * 0.02, h * 0.72, w * 0.06, h * 0.26, w * 0.30, h * 0.05);
-  ctx.bezierCurveTo(w * 0.42, -h * 0.02, w * 0.58, -h * 0.02, w * 0.70, h * 0.05);
-  ctx.bezierCurveTo(w * 0.94, h * 0.26, w * 0.98, h * 0.72, w * 0.5, h * 0.99);
-  ctx.closePath();
-}
-function wrapText(ctx, text, cx, cy, maxWidth, lineHeight){
-  const words = text.split(' ');
-  const lines = [];
-  let line = '';
-  words.forEach(word => {
-    const test = line ? `${line} ${word}` : word;
-    if (line && ctx.measureText(test).width > maxWidth){ lines.push(line); line = word; }
-    else line = test;
-  });
-  lines.push(line);
-  const startY = cy - (lines.length - 1) * lineHeight / 2;
-  lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineHeight));
-}
-
-/* a gold-rimmed petal — clips the project's screenshot (or a generated
-   placeholder wash) to the petal silhouette, then adds a metallic gold
-   foil edge and a small category-colored gem at the base */
-function makePetalTexture(p, sourceImg){
-  const w = PETAL_W, h = PETAL_H;
+/* placeholder card — drawn when a project has no resolvable image,
+   mirrors the look of the pre-rendered screenshot cards */
+function makePlaceholderTexture(p){
+  const w = 960, h = 640, chromeH = 56;
   const canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
   const color = CATEGORIES[p.category]?.color ?? 0x94a3b8;
   const rgb = `${(color >> 16) & 255}, ${(color >> 8) & 255}, ${color & 255}`;
 
-  petalPath(ctx, w, h);
-  ctx.save();
-  ctx.clip();
-  if (sourceImg){
-    const scale = Math.max(w / sourceImg.width, h / sourceImg.height);
-    const dw = sourceImg.width * scale, dh = sourceImg.height * scale;
-    ctx.drawImage(sourceImg, (w - dw) / 2, (h - dh) / 2, dw, dh);
-    const wash = ctx.createLinearGradient(0, 0, 0, h);
-    wash.addColorStop(0, 'rgba(0,0,0,0)');
-    wash.addColorStop(1, 'rgba(0,0,0,0.35)');
-    ctx.fillStyle = wash;
-    ctx.fillRect(0, 0, w, h);
-  } else {
-    ctx.fillStyle = '#151726';
-    ctx.fillRect(0, 0, w, h);
-    const wash = ctx.createRadialGradient(w/2, h*0.4, 0, w/2, h*0.4, h*0.6);
-    wash.addColorStop(0, `rgba(${rgb},0.35)`);
-    wash.addColorStop(1, `rgba(${rgb},0)`);
-    ctx.fillStyle = wash;
-    ctx.fillRect(0, 0, w, h);
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#eef1fb';
-    ctx.font = '600 32px Segoe UI, -apple-system, sans-serif';
-    wrapText(ctx, p.title, w/2, h*0.42, w*0.78, 38);
-    ctx.fillStyle = '#8a92ab';
-    ctx.font = '17px Segoe UI, -apple-system, sans-serif';
-    ctx.fillText('No public preview', w/2, h*0.56);
-  }
-  ctx.restore();
-
-  petalPath(ctx, w, h);
-  const goldGrad = ctx.createLinearGradient(0, 0, w, h);
-  goldGrad.addColorStop(0, '#fff3c4');
-  goldGrad.addColorStop(0.35, '#d4af37');
-  goldGrad.addColorStop(0.6, '#8a6100');
-  goldGrad.addColorStop(1, '#f4d789');
-  ctx.lineWidth = 14;
-  ctx.strokeStyle = goldGrad;
-  ctx.stroke();
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = 'rgba(255,250,220,0.9)';
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(w/2, h*0.93, 12, 0, Math.PI*2);
-  ctx.fillStyle = `rgb(${rgb})`;
+  ctx.fillStyle = '#11131c';
+  roundRectPath(ctx, 0, 0, w, h, 26);
   ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#3a2c00';
+
+  const grad = ctx.createLinearGradient(0, chromeH, 0, h);
+  grad.addColorStop(0, `rgba(${rgb}, 0.18)`);
+  grad.addColorStop(1, `rgba(${rgb}, 0)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, chromeH, w, h - chromeH);
+
+  ctx.fillStyle = '#11131c';
+  ctx.fillRect(0, 0, w, chromeH);
+  [['#ff5f56',22], ['#ffbd2e',44], ['#27c93f',66]].forEach(([c, cx]) => {
+    ctx.beginPath(); ctx.arc(cx, chromeH/2, 6, 0, Math.PI*2); ctx.fillStyle = c; ctx.fill();
+  });
+
+  const cx = w/2, cy = chromeH + (h - chromeH)/2 - 30;
+  ctx.strokeStyle = `rgba(${rgb}, 1)`; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = `rgba(${rgb}, 1)`;
+  ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI*2); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#eef1fb';
+  ctx.font = '600 40px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(p.title, cx, cy + 68);
+  ctx.fillStyle = '#949eb8';
+  ctx.font = '20px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(p.subtitle || '', cx, cy + 106);
+  ctx.fillStyle = '#6e768c';
+  ctx.fillText('No public preview', cx, cy + 140);
+
+  // border
+  ctx.strokeStyle = `rgba(${rgb}, 0.9)`; ctx.lineWidth = 4;
+  roundRectPath(ctx, 2, 2, w - 4, h - 4, 24);
   ctx.stroke();
 
   return new THREE.CanvasTexture(canvas);
+}
+function roundRectPath(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
 }
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const nodes = [];       // { card, glow, project, baseWidth, baseHeight }
 const raycastTargets = [];
 
-function disposeNode(n){
-  scene.remove(n.card, n.glow);
+  function disposeNode(n){
+    carouselGroup.remove(n.card, n.glow);
   n.card.material.map?.dispose();
   n.card.material.dispose();
   n.glow.material.dispose(); // glow's texture is cached/shared — not disposed here
@@ -579,22 +515,25 @@ function rebuildScene(){
   nodes.forEach(disposeNode);
   nodes.length = 0;
   raycastTargets.length = 0;
-  const tierCounts = { 1: 0, 2: 0, 3: 0 };
-
-  PROJECTS.forEach(p => {
+  PROJECTS.forEach((p, index) => {
     const cfg = TIER_CONFIG[p.tier] ?? TIER_CONFIG[3];
-    const idx = tierCounts[p.tier] = (tierCounts[p.tier] ?? 0) + 1;
-    const angle = idx * GOLDEN_ANGLE + p.tier; // offset per tier so rings don't align
-    const jitterY = Math.sin(idx * 12.9898) * 0.5;
+
+    // One continuous orbit puts every creation into the same carousel.
+    const angle = (index / Math.max(1, PROJECTS.length)) * Math.PI * 2 - Math.PI / 2;
+    const waveY = Math.sin(angle * 2) * 0.55;
     const color = CATEGORIES[p.category]?.color ?? 0x94a3b8;
 
     const width = cfg.width;
     const height = width * CARD_ASPECT;
     const position = new THREE.Vector3(
       Math.cos(angle) * cfg.radius,
-      cfg.y + jitterY,
+      cfg.y + waveY,
       Math.sin(angle) * cfg.radius
     );
+
+    // Store original orbit coordinates for lerping back from center
+    const baseX = position.x;
+    const baseZ = position.z;
 
     /* glow — soft radial category-color halo, rendered behind the card */
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -604,30 +543,27 @@ function rebuildScene(){
     glow.scale.set(glowSize, glowSize, 1);
     glow.position.copy(position);
     glow.renderOrder = 0;
-    scene.add(glow);
+    carouselGroup.add(glow);
 
-    /* card — a gold-rimmed petal clipped to the project's screenshot
-       (or a generated placeholder), oriented to radiate outward from
-       the rose like a fallen petal */
+    /* card — screenshot/custom image matching the app-preview reference, falling back to a generated placeholder if no image resolves */
     const card = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
-    const azimuth = Math.atan2(position.x - ROSE_CENTER.x, position.z - ROSE_CENTER.z);
+    const imageUrl = p.image || `./screenshots/${p.slug}.png`;
+    card.material.map = textureLoader.load(
+      imageUrl,
+      undefined,
+      undefined,
+      () => { card.material.map = makePlaceholderTexture(p); card.material.needsUpdate = true; }
+    );
     card.scale.set(width, height, 1);
     card.position.copy(position);
     card.renderOrder = 1;
     card.userData.project = p;
+    card.userData.baseX = baseX;
     card.userData.baseY = position.y;
-    card.userData.phase = idx;
-    card.userData.baseRotation = azimuth + Math.PI;
-    card.material.rotation = card.userData.baseRotation;
-    scene.add(card);
+    card.userData.baseZ = baseZ;
+    card.userData.phase = index + 1;
+    carouselGroup.add(card);
     raycastTargets.push(card);
-
-    const imageUrl = p.image || `./screenshots/${p.slug}.png`;
-    const rawImg = new Image();
-    rawImg.crossOrigin = 'anonymous';
-    rawImg.onload = () => { card.material.map = makePetalTexture(p, rawImg); card.material.needsUpdate = true; };
-    rawImg.onerror = () => { card.material.map = makePetalTexture(p, null); card.material.needsUpdate = true; };
-    rawImg.src = imageUrl;
 
     nodes.push({ card, glow, project: p, baseWidth: width, baseHeight: height });
   });
@@ -640,9 +576,6 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const tooltip = document.getElementById('tooltip');
 const panel = document.getElementById('detail-panel');
-const hoverPreview = document.getElementById('hover-preview');
-const hoverPreviewImg = document.getElementById('hover-preview-img');
-const hoverPreviewTitle = document.getElementById('hover-preview-title');
 let hovered = null;
 let activeCategory = 'all';
 let selectedCard = null;
@@ -658,14 +591,6 @@ function onPointerMove(e){
     hovered = hit;
     renderer.domElement.classList.toggle('hovering', !!hovered);
     tooltip.classList.toggle('show', !!hovered);
-    hoverPreview.classList.toggle('show', !!hovered);
-    if (hovered){
-      const p = hovered.userData.project;
-      hoverPreviewImg.style.display = '';
-      hoverPreviewImg.onerror = () => { hoverPreviewImg.style.display = 'none'; };
-      hoverPreviewImg.src = p.image || `./screenshots/${p.slug}.png`;
-      hoverPreviewTitle.textContent = `${p.title} — ${p.subtitle}`;
-    }
   }
   if (hovered){
     tooltip.style.left = e.clientX + 'px';
@@ -741,6 +666,7 @@ function openPanel(p){
 document.getElementById('closePanel').addEventListener('click', () => {
   panel.classList.remove('open');
   selectedCard = null;
+  markInteracting();
 });
 
 /* ---------------------------------------------------------------------
@@ -826,14 +752,9 @@ function saveProjectsLocal(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(PROJECTS));
   updateDraftBadge();
 }
-function saveSiteConfigLocal(){
-  localStorage.setItem(SITE_CONFIG_KEY, JSON.stringify(SITE_CONFIG));
-  updateDraftBadge();
-}
 function updateDraftBadge(){
   const badge = document.getElementById('draftBadge');
-  const hasDraft = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(SITE_CONFIG_KEY);
-  badge.textContent = hasDraft ? '● local draft active' : '';
+  badge.textContent = localStorage.getItem(STORAGE_KEY) ? '● local draft active' : '';
 }
 document.getElementById('exportBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(PROJECTS, null, 2)], { type: 'application/json' });
@@ -843,28 +764,9 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(a.href);
 });
-document.getElementById('exportConfigBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(SITE_CONFIG, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'site-config.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
-document.getElementById('spotifyApply').addEventListener('click', () => {
-  const raw = document.getElementById('spotifyInput').value.trim();
-  if (raw && !parseSpotifyEmbedUrl(raw)){
-    alert("Couldn't recognize that as a Spotify link. Paste a track, album, or playlist share link from Spotify's Share button.");
-    return;
-  }
-  SITE_CONFIG.spotifyUrl = raw;
-  saveSiteConfigLocal();
-  renderMusicPlayer();
-});
 document.getElementById('resetBtn').addEventListener('click', () => {
-  if (!confirm('Discard your local drafts (projects and music) and reload the published versions?')) return;
+  if (!confirm('Discard your local draft and reload the published projects.json?')) return;
   localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(SITE_CONFIG_KEY);
   location.reload();
 });
 editToggleBtn.addEventListener('click', () => {
@@ -875,7 +777,6 @@ editToggleBtn.addEventListener('click', () => {
   document.querySelector('#hud .hint').textContent = editMode
     ? 'Edit Mode — click a card to edit it, or Add Project below'
     : 'Drag to orbit · Scroll to zoom · Click a node to open a project';
-  if (editMode) document.getElementById('spotifyInput').value = SITE_CONFIG.spotifyUrl || '';
 });
 updateDraftBadge();
 
@@ -890,7 +791,7 @@ function buildFilters(){
 }
 function makePill(key, label, color){
   const el = document.createElement('div');
-  el.className = 'pill' + (key === 'all' ? ' active' : '');
+  el.className = 'pill liquid-glass' + (key === 'all' ? ' active' : '');
   el.dataset.key = key;
   el.innerHTML = color != null
     ? `<span class="dot" style="background:#${color.toString(16).padStart(6,'0')}"></span>${label}`
@@ -917,42 +818,128 @@ window.addEventListener('resize', () => {
 --------------------------------------------------------------------- */
 const clock = new THREE.Clock();
 
-function animate(){
-  requestAnimationFrame(animate);
-  const t = clock.getElapsedTime();
+  // Center-focus target coordinates for the active card
+  const centerTarget = new THREE.Vector3(0, 0, 14);
 
-  nodes.forEach(n => {
-    const { card, glow, project, baseWidth, baseHeight } = n;
-    const isHover = card === hovered;
-    const isSelected = card === selectedCard;
-    const matches = activeCategory === 'all' || project.category === activeCategory;
+  function animate(){
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
 
-    // gentle bob + flutter, phase-offset so petals don't move in sync
-    // (skipped under prefers-reduced-motion — petals stay put)
-    const y = PREFERS_REDUCED_MOTION ? card.userData.baseY
-      : card.userData.baseY + Math.sin(t * 0.6 + card.userData.phase) * 0.15;
-    card.position.y = y;
-    glow.position.y = y;
-    card.material.rotation = PREFERS_REDUCED_MOTION ? card.userData.baseRotation
-      : card.userData.baseRotation + Math.sin(t * 0.5 + card.userData.phase) * 0.05;
+    nodes.forEach(n => {
+      const { card, glow, project, baseWidth, baseHeight } = n;
+      const isHover = card === hovered;
+      const isSelected = card === selectedCard;
+      const matches = activeCategory === 'all' || project.category === activeCategory;
 
-    const factor = (isHover || isSelected ? 1.16 : 1) * (matches ? 1 : 0.72);
-    card.scale.x += (baseWidth * factor - card.scale.x) * 0.15;
-    card.scale.y += (baseHeight * factor - card.scale.y) * 0.15;
-    const glowBase = Math.max(baseWidth, baseHeight) * 1.6;
-    glow.scale.x += (glowBase * factor - glow.scale.x) * 0.15;
-    glow.scale.y += (glowBase * factor - glow.scale.y) * 0.15;
+      if (isSelected) {
+        // Active card: scale up significantly and translate to center front
+        const targetScale = baseWidth * 2.2;
+        card.scale.x += (targetScale - card.scale.x) * 0.08;
+        card.scale.y += (targetScale * CARD_ASPECT - card.scale.y) * 0.08;
 
-    const targetCardOpacity = matches ? 1 : 0.3;
-    card.material.opacity += (targetCardOpacity - card.material.opacity) * 0.15;
+        // Calculate the center target in the local coordinate space of the rotating group.
+        // Refresh its world transform first so the focused card does not remain in the orbit.
+        carouselGroup.updateMatrixWorld(true);
+        // Move the center target much closer to the camera so the active card is prominently foregrounded
+        const prominentTarget = new THREE.Vector3(0, 0, 20);
+        const localCenter = carouselGroup.worldToLocal(prominentTarget);
+        card.position.lerp(localCenter, 0.08);
+        card.renderOrder = 10;
+        glow.renderOrder = 9;
 
-    const targetGlowOpacity = (isHover || isSelected ? 1 : 0.6) * (matches ? 1 : 0.2);
-    glow.material.opacity += (targetGlowOpacity - glow.material.opacity) * 0.15;
-  });
+        const glowBase = Math.max(baseWidth, baseHeight) * 2.8;
+        glow.scale.x += (glowBase - glow.scale.x) * 0.08;
+        glow.scale.y += (glowBase - glow.scale.y) * 0.08;
+        glow.position.copy(card.position);
 
-  controls.update();
-  renderer.render(scene, camera);
+        card.material.opacity += (1 - card.material.opacity) * 0.15;
+        glow.material.opacity += (1 - glow.material.opacity) * 0.15;
+
+      } else {
+        // Background cards: gentle bob in their orbit position
+        card.renderOrder = 1;
+        glow.renderOrder = 0;
+        const y = card.userData.baseY + Math.sin(t * 0.6 + card.userData.phase) * 0.15;
+
+        // Target orbit position (needs to rotate with the scene group)
+        const orbitPos = new THREE.Vector3(
+          card.userData.baseX,
+          y,
+          card.userData.baseZ
+        );
+
+        // If something is selected, push unselected cards back and dim them
+        const depthFactor = selectedCard ? 0.65 : 1;
+        const scaleFactor = (isHover ? 1.16 : 1) * (matches ? 1 : 0.72) * depthFactor;
+
+        card.scale.x += (baseWidth * scaleFactor - card.scale.x) * 0.12;
+        card.scale.y += (baseHeight * scaleFactor - card.scale.y) * 0.12;
+
+        card.position.lerp(orbitPos, 0.12);
+
+        const glowBase = Math.max(baseWidth, baseHeight) * 1.6;
+        glow.scale.x += (glowBase * scaleFactor - glow.scale.x) * 0.12;
+        glow.scale.y += (glowBase * scaleFactor - glow.scale.y) * 0.12;
+        glow.position.copy(card.position);
+
+        const targetCardOpacity = (matches ? 1 : 0.3) * (selectedCard ? 0.4 : 1);
+        card.material.opacity += (targetCardOpacity - card.material.opacity) * 0.15;
+
+        const targetGlowOpacity = (isHover ? 1 : 0.6) * (matches ? 1 : 0.2) * (selectedCard ? 0.3 : 1);
+        glow.material.opacity += (targetGlowOpacity - glow.material.opacity) * 0.15;
+      }
+    });
+
+    // If a card is selected, stop auto-rotating and let the user interact with the detail panel
+    if (selectedCard) {
+      controls.autoRotate = false;
+    } else if (!idleTimer) {
+      controls.autoRotate = true;
+    }
+
+    // Apply the auto-rotation to the carousel group rather than the camera controls
+    // to allow the active card to break out of the rotation orbit.
+    if (controls.autoRotate && !selectedCard) {
+      carouselGroup.rotation.y += 0.002;
+    }
+
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+/* ---------------------------------------------------------------------
+   SPOTIFY MUSIC CONTROL
+--------------------------------------------------------------------- */
+const spotifyInput = document.getElementById('spotify-link');
+const playSpotifyBtn = document.getElementById('play-spotify');
+const playerContainer = document.getElementById('music-player-container');
+
+function loadSpotify() {
+  const link = spotifyInput.value.trim();
+  if (!link) return;
+
+  // Extract track/playlist ID from share links
+  // e.g., https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=...
+  const match = link.match(/spotify\.com\/(track|playlist|album)\/([a-zA-Z0-9]+)/);
+  if (!match) {
+    alert('Please paste a valid Spotify share link.');
+    return;
+  }
+
+  const type = match[1];
+  const id = match[2];
+
+  playerContainer.innerHTML = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" width="300" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+  playerContainer.style.opacity = '1';
+
+  spotifyInput.value = '';
+  spotifyInput.placeholder = 'Playing background music...';
 }
+
+playSpotifyBtn.addEventListener('click', loadSpotify);
+spotifyInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') loadSpotify();
+});
 
 /* ---------------------------------------------------------------------
    BOOTSTRAP
@@ -961,8 +948,7 @@ function animate(){
   PROJECTS = await loadProjects();
   rebuildScene();
   animate();
-  SITE_CONFIG = await loadSiteConfig();
-  renderMusicPlayer();
+
 })();
 </script>
 </body>
