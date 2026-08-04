@@ -270,7 +270,7 @@
     <label>Live URL <span class="hint-small">leave blank if internal/no public link</span>
       <input id="f-url" type="text" placeholder="https://…" />
     </label>
-    <label>Image URL <span class="hint-small">leave blank for an auto-generated card</span>
+    <label>Preview Image URL <span class="hint-small">change this only to use a custom image; a saved URL creates a live-link card</span>
       <input id="f-image" type="text" placeholder="screenshots/yourfile.png or https://…" />
     </label>
     <div class="form-actions">
@@ -621,10 +621,11 @@ function makeUrlPreviewTexture(p){
 }
 
 function shouldUseUrlPreview(p){
-  if (!p.url || p.image) return false;
+  if (!p.url) return false;
+  // An edited live URL deliberately takes precedence over a pre-existing image.
   if (p.previewMode === 'url') return true;
-  // Existing internal projects become live-link previews as soon as an owner adds a URL.
-  return /Internal tool — no public deployment/.test(p.builtWith || '');
+  // Preserve a safe fallback for legacy internal projects whose owners add a URL.
+  return !p.image && /Internal tool — no public deployment/.test(p.builtWith || '');
 }
 
 function applyPreviewTexture(card, p){
@@ -673,7 +674,12 @@ const raycastTargets = [];
   n.glow.material.dispose(); // glow's texture is cached/shared — not disposed here
 }
 
+let previewFocusTimer = null;
 function rebuildScene(){
+  // A saved edit replaces the old sprites; do not retain a disposed selected or hovered card.
+  selectedCard = null;
+  hovered = null;
+  panel.classList.remove('open');
   nodes.forEach(disposeNode);
   nodes.length = 0;
   raycastTargets.length = 0;
@@ -724,6 +730,20 @@ function rebuildScene(){
 
     nodes.push({ card, glow, project: p, baseWidth: width, baseHeight: height });
   });
+}
+
+function focusSavedPreview(slug){
+  clearTimeout(previewFocusTimer);
+  const node = nodes.find((candidate) => candidate.project.slug === slug);
+  if (!node) return;
+  selectedCard = node.card;
+  // Hold the new preview in the foreground long enough for its owner to confirm it.
+  previewFocusTimer = setTimeout(() => {
+    if (selectedCard === node.card && !panel.classList.contains('open')) {
+      selectedCard = null;
+      markInteracting();
+    }
+  }, 4200);
 }
 
 /* ---------------------------------------------------------------------
@@ -878,8 +898,12 @@ document.getElementById('f-save').addEventListener('click', () => {
   if (!title){ alert('Title is required.'); return; }
   const editedUrl = document.getElementById('f-url').value.trim() || null;
   const editedImage = document.getElementById('f-image').value.trim() || null;
-  const urlChanged = Boolean(editingProject && editedUrl && editedUrl !== editingProject.url);
-  const previewMode = editedImage ? 'image' : (editedUrl && (!editingProject || urlChanged || shouldUseUrlPreview(editingProject)) ? 'url' : null);
+  const previousImage = editingProject?.image || null;
+  const imageChanged = editedImage !== previousImage;
+  // A newly saved URL always creates an immediate live-link preview, even for
+  // projects that had an old screenshot. Explicitly changing the image field
+  // remains the way to request a screenshot/image preview instead.
+  const previewMode = imageChanged && editedImage ? 'image' : (editedUrl ? 'url' : null);
   const data = {
     slug: editingProject ? editingProject.slug : slugify(title),
     title,
@@ -899,6 +923,7 @@ document.getElementById('f-save').addEventListener('click', () => {
   saveProjectsLocal();
   rebuildScene();
   closeEditForm();
+  if (data.previewMode === 'url') focusSavedPreview(data.slug);
 });
 
 document.getElementById('f-delete').addEventListener('click', () => {
@@ -1071,7 +1096,7 @@ const clock = new THREE.Clock();
     // to allow the active card to break out of the rotation orbit.
     if (controls.autoRotate && !selectedCard) {
       // A calm gallery pace that leaves enough time to recognize each app preview.
-      carouselGroup.rotation.y += 0.00018;
+      carouselGroup.rotation.y += 0.00012;
     }
 
     updateRoseLamp();
