@@ -357,7 +357,8 @@ controls.dampingFactor = 0.06;
 controls.minDistance = 6;
 controls.maxDistance = 32;
 controls.maxPolarAngle = Math.PI * 0.85;
-controls.autoRotate = true;
+const PREFERS_REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+controls.autoRotate = !PREFERS_REDUCED_MOTION;
 controls.autoRotateSpeed = 0.35;
 controls.target.set(0, 1.2, 0);
 
@@ -366,9 +367,15 @@ let idleTimer = null;
 function markInteracting(){
   controls.autoRotate = false;
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => controls.autoRotate = true, 2500);
+  idleTimer = setTimeout(() => { if (!PREFERS_REDUCED_MOTION) controls.autoRotate = true; }, 2500);
 }
 controls.addEventListener('start', markInteracting);
+
+if (PREFERS_REDUCED_MOTION){
+  const bgVideo = document.getElementById('bg-art');
+  bgVideo.removeAttribute('autoplay');
+  bgVideo.pause();
+}
 
 /* starfield — single BufferGeometry, one draw call */
 (function buildStarfield(){
@@ -921,10 +928,13 @@ function animate(){
     const matches = activeCategory === 'all' || project.category === activeCategory;
 
     // gentle bob + flutter, phase-offset so petals don't move in sync
-    const y = card.userData.baseY + Math.sin(t * 0.6 + card.userData.phase) * 0.15;
+    // (skipped under prefers-reduced-motion — petals stay put)
+    const y = PREFERS_REDUCED_MOTION ? card.userData.baseY
+      : card.userData.baseY + Math.sin(t * 0.6 + card.userData.phase) * 0.15;
     card.position.y = y;
     glow.position.y = y;
-    card.material.rotation = card.userData.baseRotation + Math.sin(t * 0.5 + card.userData.phase) * 0.05;
+    card.material.rotation = PREFERS_REDUCED_MOTION ? card.userData.baseRotation
+      : card.userData.baseRotation + Math.sin(t * 0.5 + card.userData.phase) * 0.05;
 
     const factor = (isHover || isSelected ? 1.16 : 1) * (matches ? 1 : 0.72);
     card.scale.x += (baseWidth * factor - card.scale.x) * 0.15;
