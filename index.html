@@ -1116,8 +1116,8 @@ const clock = new THREE.Clock();
     // Apply the auto-rotation to the carousel group rather than the camera controls
     // to allow the active card to break out of the rotation orbit.
     if (controls.autoRotate && !selectedCard) {
-      // A calm gallery pace that leaves enough time to recognize each app preview.
-      carouselGroup.rotation.y += 0.00012;
+      // A near-imperceptible gallery creep: motion is felt over time, never rushed.
+      carouselGroup.rotation.y += 0.000035;
     }
 
     updateRoseLamp();
