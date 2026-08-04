@@ -584,6 +584,61 @@ function makePlaceholderTexture(p){
 
   return new THREE.CanvasTexture(canvas);
 }
+function makeUrlPreviewTexture(p){
+  const texture = makePlaceholderTexture(p);
+  const canvas = texture.image;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const color = CATEGORIES[p.category]?.color ?? 0x94a3b8;
+  let hostname = p.url || '';
+  try { hostname = new URL(p.url).hostname.replace(/^www\./, ''); } catch(e) { /* retain raw URL */ }
+
+  // Replace the generic internal-tool caption with a clear destination cue.
+  ctx.fillStyle = 'rgba(10, 12, 20, 0.94)';
+  roundRectPath(ctx, 96, h * 0.62, w - 192, 106, 14);
+  ctx.fill();
+  ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+  ctx.font = '600 15px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText('LIVE LINK', w / 2, h * 0.62 + 32);
+  ctx.fillStyle = '#eef1fb';
+  ctx.font = '500 24px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(hostname, w / 2, h * 0.62 + 70);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function shouldUseUrlPreview(p){
+  if (!p.url || p.image) return false;
+  if (p.previewMode === 'url') return true;
+  // Existing internal projects become live-link previews as soon as an owner adds a URL.
+  return /Internal tool — no public deployment/.test(p.builtWith || '');
+}
+
+function applyPreviewTexture(card, p){
+  const useUrlPreview = shouldUseUrlPreview(p);
+  // Start with a generated preview immediately; never show a blank card while an image loads.
+  card.material.map = useUrlPreview ? makeUrlPreviewTexture(p) : makePlaceholderTexture(p);
+  card.material.needsUpdate = true;
+  if (useUrlPreview) return;
+
+  const imageUrl = p.image || `./screenshots/${p.slug}.png`;
+  textureLoader.load(
+    imageUrl,
+    (texture) => {
+      if (card.userData.project !== p) { texture.dispose(); return; }
+      const previousTexture = card.material.map;
+      card.material.map = texture;
+      card.material.needsUpdate = true;
+      if (previousTexture && previousTexture !== texture) previousTexture.dispose();
+    },
+    undefined,
+    () => {
+      // Keep the already-rendered generated preview if the file or remote image is unavailable.
+      card.material.needsUpdate = true;
+    }
+  );
+}
+
 function roundRectPath(ctx, x, y, w, h, r){
   ctx.beginPath();
   ctx.moveTo(x+r, y);
@@ -639,15 +694,9 @@ function rebuildScene(){
     glow.renderOrder = 0;
     carouselGroup.add(glow);
 
-    /* card — screenshot/custom image matching the app-preview reference, falling back to a generated placeholder if no image resolves */
+    /* card — image when available; otherwise a visible generated preview.
+       Editing a live URL produces a linked-card preview immediately. */
     const card = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
-    const imageUrl = p.image || `./screenshots/${p.slug}.png`;
-    card.material.map = textureLoader.load(
-      imageUrl,
-      undefined,
-      undefined,
-      () => { card.material.map = makePlaceholderTexture(p); card.material.needsUpdate = true; }
-    );
     card.scale.set(width, height, 1);
     card.position.copy(position);
     card.renderOrder = 1;
@@ -656,6 +705,7 @@ function rebuildScene(){
     card.userData.baseY = position.y;
     card.userData.baseZ = baseZ;
     card.userData.phase = index + 1;
+    applyPreviewTexture(card, p);
     carouselGroup.add(card);
     raycastTargets.push(card);
 
@@ -813,6 +863,10 @@ document.getElementById('addProjectBtn').addEventListener('click', () => openEdi
 document.getElementById('f-save').addEventListener('click', () => {
   const title = document.getElementById('f-title').value.trim();
   if (!title){ alert('Title is required.'); return; }
+  const editedUrl = document.getElementById('f-url').value.trim() || null;
+  const editedImage = document.getElementById('f-image').value.trim() || null;
+  const urlChanged = Boolean(editingProject && editedUrl && editedUrl !== editingProject.url);
+  const previewMode = editedImage ? 'image' : (editedUrl && (!editingProject || urlChanged || shouldUseUrlPreview(editingProject)) ? 'url' : null);
   const data = {
     slug: editingProject ? editingProject.slug : slugify(title),
     title,
@@ -823,8 +877,9 @@ document.getElementById('f-save').addEventListener('click', () => {
     builtWith: document.getElementById('f-built').value.trim(),
     features: document.getElementById('f-features').value.split('\n').map(s => s.trim()).filter(Boolean),
     howToUse: document.getElementById('f-howto').value.trim(),
-    url: document.getElementById('f-url').value.trim() || null,
-    image: document.getElementById('f-image').value.trim() || null,
+    url: editedUrl,
+    image: editedImage,
+    previewMode,
   };
   if (editingProject) Object.assign(editingProject, data);
   else PROJECTS.push(data);
@@ -1003,7 +1058,7 @@ const clock = new THREE.Clock();
     // to allow the active card to break out of the rotation orbit.
     if (controls.autoRotate && !selectedCard) {
       // A calm gallery pace that leaves enough time to recognize each app preview.
-      carouselGroup.rotation.y += 0.00065;
+      carouselGroup.rotation.y += 0.00018;
     }
 
     updateRoseLamp();
