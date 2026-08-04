@@ -89,9 +89,9 @@
   /* The Spotify controller is present for visitor playback but has no visible homepage box. */
   /* Keep a real 300 × 80 player off-screen: Spotify's controller may not
      initialize in a 1-pixel container, but visitors still never see a box. */
-  #music-player-container{position:fixed;left:-10000px;bottom:0;width:300px;height:80px;z-index:-1;
+  #music-player-container{position:fixed;left:-10000px;top:0;width:300px;height:80px;z-index:1;
     opacity:0;pointer-events:none;overflow:hidden;border-radius:12px;transition:opacity .3s ease;}
-  body.edit-mode #music-player-container{left:28px;bottom:28px;width:300px;height:80px;z-index:15;
+  body.edit-mode #music-player-container{left:28px;top:auto;bottom:28px;width:300px;height:80px;z-index:15;
     opacity:1;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);}
   #music-player-container iframe{display:block;border:0;}
 
@@ -631,6 +631,102 @@ function makeUrlPreviewTexture(p){
   return texture;
 }
 
+function makeVacancyDashboardTexture(p){
+  const w = 960, h = 640, chromeH = 56;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const cyan = '#22d3ee';
+  const ink = '#07121e';
+  const panel = '#0d2030';
+  const muted = '#8aa4b9';
+
+  roundRectPath(ctx, 0, 0, w, h, 26);
+  const background = ctx.createLinearGradient(0, chromeH, w, h);
+  background.addColorStop(0, '#102f42');
+  background.addColorStop(0.5, ink);
+  background.addColorStop(1, '#09111c');
+  ctx.fillStyle = background;
+  ctx.fill();
+  ctx.save();
+  roundRectPath(ctx, 0, 0, w, h, 26);
+  ctx.clip();
+
+  // Browser chrome establishes the card as a live product rather than an image thumbnail.
+  ctx.fillStyle = '#08121d';
+  ctx.fillRect(0, 0, w, chromeH);
+  [['#ff5f56',22], ['#ffbd2e',44], ['#27c93f',66]].forEach(([c, cx]) => {
+    ctx.beginPath(); ctx.arc(cx, chromeH / 2, 6, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
+  });
+  ctx.fillStyle = 'rgba(255,255,255,.075)';
+  roundRectPath(ctx, 104, 15, 610, 26, 13); ctx.fill();
+  ctx.fillStyle = '#96a9bc'; ctx.font = '14px Segoe UI, -apple-system, sans-serif';
+  ctx.textAlign = 'left'; ctx.fillText('vacancyapp-42vudntx.manus.space', 121, 33);
+  ctx.fillStyle = cyan; ctx.font = '700 12px Segoe UI, -apple-system, sans-serif';
+  ctx.textAlign = 'right'; ctx.fillText('LIVE OPERATIONS', w - 34, 33);
+
+  // Dashboard header.
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#f5fbff'; ctx.font = '600 35px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText('VACANCY REPORT', 52, 126);
+  ctx.fillStyle = muted; ctx.font = '16px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText('PORTFOLIO OCCUPANCY INTELLIGENCE', 54, 156);
+  ctx.fillStyle = 'rgba(34,211,238,.13)';
+  roundRectPath(ctx, 738, 103, 166, 42, 21); ctx.fill();
+  ctx.fillStyle = cyan; ctx.font = '600 14px Segoe UI, -apple-system, sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('LIVE SNAPSHOT', 821, 130);
+
+  const metric = (x, label, accent, mark) => {
+    ctx.fillStyle = panel;
+    roundRectPath(ctx, x, 196, 254, 140, 18); ctx.fill();
+    ctx.strokeStyle = `rgba(255,255,255,.10)`; ctx.lineWidth = 1;
+    roundRectPath(ctx, x, 196, 254, 140, 18); ctx.stroke();
+    ctx.fillStyle = accent; ctx.fillRect(x, 196, 5, 140);
+    ctx.fillStyle = muted; ctx.font = '600 13px Segoe UI, -apple-system, sans-serif';
+    ctx.textAlign = 'left'; ctx.fillText(label, x + 26, 232);
+    ctx.fillStyle = '#eff8ff'; ctx.font = '600 25px Segoe UI, -apple-system, sans-serif';
+    ctx.fillText(mark, x + 26, 282);
+  };
+  metric(52, 'VACANCY SNAPSHOT', cyan, 'Portfolio view');
+  metric(353, 'DAILY CHANGES', '#facc15', 'Building trends');
+  metric(654, 'WEEKLY TREND', '#a78bfa', '7-day analysis');
+
+  // A simple visual data band, intentionally non-numeric so it never implies live values.
+  ctx.fillStyle = 'rgba(9,23,35,.92)';
+  roundRectPath(ctx, 52, 372, 852, 148, 18); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.lineWidth = 1;
+  roundRectPath(ctx, 52, 372, 852, 148, 18); ctx.stroke();
+  ctx.fillStyle = muted; ctx.font = '600 13px Segoe UI, -apple-system, sans-serif';
+  ctx.textAlign = 'left'; ctx.fillText('PROPERTY ACTIVITY', 78, 408);
+  const bars = [0.36, 0.62, 0.42, 0.78, 0.52, 0.69, 0.46, 0.84, 0.58];
+  bars.forEach((value, index) => {
+    const x = 82 + index * 82;
+    const bh = 72 * value;
+    const g = ctx.createLinearGradient(0, 488 - bh, 0, 488);
+    g.addColorStop(0, cyan); g.addColorStop(1, 'rgba(34,211,238,.16)');
+    ctx.fillStyle = g;
+    roundRectPath(ctx, x, 488 - bh, 34, bh, 8); ctx.fill();
+  });
+  ctx.fillStyle = '#c7d9e6'; ctx.font = '15px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText('Daily view · change tracker · reporting-ready', 78, 552);
+
+  // Lower title lockup gives the card a legible identity from any carousel position.
+  const fade = ctx.createLinearGradient(0, 540, 0, h);
+  fade.addColorStop(0, 'rgba(5,10,16,0)'); fade.addColorStop(1, 'rgba(5,10,16,.96)');
+  ctx.fillStyle = fade; ctx.fillRect(0, 530, w, h - 530);
+  ctx.fillStyle = cyan; ctx.font = '600 14px Segoe UI, -apple-system, sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('LIVE APP PREVIEW', w / 2, h - 77);
+  ctx.fillStyle = '#fff'; ctx.font = '600 30px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(p.title, w / 2, h - 40);
+  ctx.restore();
+
+  ctx.strokeStyle = cyan; ctx.lineWidth = 4;
+  roundRectPath(ctx, 2, 2, w - 4, h - 4, 24); ctx.stroke();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 function makeLivePreviewTexture(p, image){
   const w = 960, h = 640, chromeH = 56;
   const canvas = document.createElement('canvas');
@@ -709,6 +805,13 @@ function getLiveThumbnailUrl(url){
 }
 
 function applyPreviewTexture(card, p){
+  // Certain flagship tools receive a deliberate showcase card rather than a
+  // noisy external thumbnail, while every other project keeps the live URL flow.
+  if (p.previewStyle === 'vacancy-dashboard') {
+    card.material.map = makeVacancyDashboardTexture(p);
+    card.material.needsUpdate = true;
+    return;
+  }
   const useUrlPreview = shouldUseUrlPreview(p);
   // Always start with a generated card; this prevents the blank-state failure even
   // when a site blocks capture, is private, or an image request is still pending.
@@ -1299,6 +1402,11 @@ async function renderMusicPlayer(){
   spotifyController = null;
   playerContainer.replaceChildren();
   if (!parsed) return;
+
+  // Arm immediately—visitors often drag or click before Spotify's remote API
+  // has finished loading. That early gesture must be remembered and replayed
+  // once the controller becomes available.
+  armSoundtrackGestureFallback();
 
   const mount = document.createElement('div');
   mount.id = 'spotify-embed-root';

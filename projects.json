@@ -16,7 +16,7 @@
     "builtWith": "Built with Manus AI — a live operations dashboard generated from a prompt and deployed on Manus's hosting.",
     "features": ["Real-time vacancy totals: total vacant, unleased, preleased, on notice, eviction", "Daily change tracker showing building-by-building vacancy swings", "Weekly 7-day trend view", "One-click refresh for live data"],
     "howToUse": "Open the dashboard for today's vacancy snapshot; check Daily Change and Weekly Trend to spot movement, and hit Refresh to pull the latest numbers.",
-    "url": "https://vacancyapp-42vudntx.manus.space/", "image": null },
+    "url": "https://vacancyapp-42vudntx.manus.space/", "image": null, "previewStyle": "vacancy-dashboard" },
   { "slug": "investor-summary", "title": "Investor Summary", "subtitle": "Investor Summary Portal", "category": "financial", "tier": 1,
     "desc": "Investor-facing performance summary and reporting portal.",
     "builtWith": "Built with Manus AI — an internal investor reporting tool generated from a spec and hosted on Manus.",
