@@ -41,15 +41,37 @@
   .pill.active{border-color:rgba(255,255,255,0.35);}
   .pill .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
-  #detail-panel{position:fixed;top:0;right:0;height:100%;width:360px;max-width:88vw;
+  #tooltip{position:fixed;pointer-events:none;z-index:15;padding:6px 10px;border-radius:8px;
+    background:rgba(10,12,20,0.85);border:1px solid var(--panel-border);font-size:12px;
+    color:var(--text);transform:translate(-50%,-140%);opacity:0;transition:opacity .12s ease;
+    white-space:nowrap;}
+  #tooltip.show{opacity:1;}
+
+  #editToggle{margin-left:auto;pointer-events:auto;}
+  #editToggle.active{background:#fff;color:#0a0a12;border-color:#fff;}
+
+  #editToolbar{display:none;align-items:center;gap:8px;pointer-events:auto;}
+  body.edit-mode #editToolbar{display:flex;}
+  #editToolbar .draft-badge{font-size:11px;color:var(--text-dim);margin-right:4px;}
+  #editToolbar button{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500;
+    background:var(--panel-bg);border:1px solid var(--panel-border);color:var(--text);
+    cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+  #editToolbar button:hover{border-color:rgba(255,255,255,0.35);}
+  #addProjectBtn{display:none;position:fixed;right:28px;bottom:28px;z-index:19;padding:14px 20px;
+    border-radius:999px;background:#fff;color:#0a0a12;font-weight:600;font-size:14px;border:none;
+    cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+  body.edit-mode #addProjectBtn{display:block;}
+
+  .side-panel{position:fixed;top:0;right:0;height:100%;width:360px;max-width:88vw;
     background:var(--panel-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     border-left:1px solid var(--panel-border);z-index:20;
     transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.9,.25,1);
-    padding:28px 26px;display:flex;flex-direction:column;gap:14px;}
-  #detail-panel.open{transform:translateX(0);}
-  #detail-panel .close-btn{position:absolute;top:20px;right:20px;background:none;border:none;
+    padding:28px 26px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
+  .side-panel.open{transform:translateX(0);}
+  .side-panel .close-btn{position:absolute;top:20px;right:20px;background:none;border:none;
     color:var(--text-dim);font-size:20px;cursor:pointer;line-height:1;padding:4px;}
-  #detail-panel .close-btn:hover{color:var(--text);}
+  .side-panel .close-btn:hover{color:var(--text);}
+
   #detail-panel .cat-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;
     text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-top:26px;}
   #detail-panel .cat-badge .dot{width:8px;height:8px;border-radius:50%;}
@@ -62,18 +84,35 @@
   #detail-panel a.launch:hover{transform:translateY(-1px);}
   #detail-panel .launch.disabled{background:rgba(255,255,255,0.08);color:var(--text-dim);
     pointer-events:none;font-weight:500;}
+  #detail-panel .info-block{margin-top:18px;padding-top:16px;border-top:1px solid var(--panel-border);}
+  #detail-panel .info-block h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;
+    letter-spacing:1px;color:var(--text-dim);font-weight:600;}
+  #detail-panel .info-block p{margin:0;font-size:13.5px;line-height:1.55;color:#c7cede;}
+  #detail-panel .info-block ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6;color:#c7cede;}
+  #detail-panel .info-block ul li{margin-bottom:2px;}
 
-  #tooltip{position:fixed;pointer-events:none;z-index:15;padding:6px 10px;border-radius:8px;
-    background:rgba(10,12,20,0.85);border:1px solid var(--panel-border);font-size:12px;
-    color:var(--text);transform:translate(-50%,-140%);opacity:0;transition:opacity .12s ease;
-    white-space:nowrap;}
-  #tooltip.show{opacity:1;}
+  #edit-panel h2{margin:26px 0 4px;font-size:20px;font-weight:600;}
+  #edit-panel label{font-size:12px;color:var(--text-dim);display:flex;flex-direction:column;gap:6px;}
+  #edit-panel input, #edit-panel select, #edit-panel textarea{
+    font:inherit;font-size:14px;color:var(--text);background:rgba(255,255,255,0.06);
+    border:1px solid var(--panel-border);border-radius:8px;padding:9px 10px;resize:vertical;}
+  #edit-panel input:focus, #edit-panel select:focus, #edit-panel textarea:focus{
+    outline:none;border-color:rgba(255,255,255,0.35);}
+  #edit-panel .form-actions{margin-top:auto;display:flex;gap:10px;padding-top:10px;}
+  #edit-panel .form-actions button{flex:1;padding:12px 16px;border-radius:10px;font-size:14px;
+    font-weight:600;cursor:pointer;border:none;}
+  #edit-panel #f-save{background:#fff;color:#0a0a12;}
+  #edit-panel #f-save:hover{opacity:0.9;}
+  #edit-panel #f-delete{background:rgba(239,68,68,0.15);color:#f87171;display:none;}
+  #edit-panel #f-delete:hover{background:rgba(239,68,68,0.25);}
+  #edit-panel .hint-small{font-size:11px;color:var(--text-dim);margin:-4px 0 0;}
 
   @media (max-width:640px){
     #hud{padding:16px;}
     #hud h1{font-size:17px;}
     .pill{padding:5px 10px;font-size:11px;}
-    #detail-panel{width:100%;max-width:100%;}
+    .side-panel{width:100%;max-width:100%;}
+    #addProjectBtn{right:16px;bottom:16px;}
   }
 </style>
 <script type="importmap">
@@ -90,22 +129,87 @@
   <div id="scene-container"></div>
 
   <div id="hud">
-    <div class="title-block">
-      <h1>Brandon Rose <span>— Portfolio Constellation</span></h1>
-      <p class="hint">Drag to orbit · Scroll to zoom · Click a node to open a project</p>
+    <div class="title-block" style="display:flex;align-items:flex-start;">
+      <div>
+        <h1>Brandon Rose <span>— Portfolio Constellation</span></h1>
+        <p class="hint">Drag to orbit · Scroll to zoom · Click a node to open a project</p>
+      </div>
+      <button class="pill" id="editToggle">✎ Edit Mode</button>
     </div>
     <div id="filters"></div>
+    <div id="editToolbar">
+      <span class="draft-badge" id="draftBadge"></span>
+      <button id="exportBtn">Export projects.json</button>
+      <button id="resetBtn">Reset to published</button>
+    </div>
   </div>
 
   <div id="tooltip"></div>
 
-  <div id="detail-panel">
+  <button id="addProjectBtn">+ Add Project</button>
+
+  <div id="detail-panel" class="side-panel">
     <button class="close-btn" id="closePanel" aria-label="Close">✕</button>
     <div class="cat-badge"><span class="dot"></span><span id="d-cat"></span></div>
     <h2 id="d-title"></h2>
     <p class="subtitle" id="d-subtitle"></p>
     <p class="desc" id="d-desc"></p>
+    <div class="info-block" id="d-built-block">
+      <h3>How it was made</h3>
+      <p id="d-built"></p>
+    </div>
+    <div class="info-block" id="d-features-block">
+      <h3>Features</h3>
+      <ul id="d-features"></ul>
+    </div>
+    <div class="info-block" id="d-howto-block">
+      <h3>How to use it</h3>
+      <p id="d-howto"></p>
+    </div>
     <a class="launch" id="d-launch" target="_blank" rel="noopener noreferrer">Launch App ↗</a>
+  </div>
+
+  <div id="edit-panel" class="side-panel">
+    <button class="close-btn" id="closeEditPanel" aria-label="Close">✕</button>
+    <h2 id="edit-heading">Add Project</h2>
+    <label>Title
+      <input id="f-title" type="text" placeholder="Project name" />
+    </label>
+    <label>Subtitle
+      <input id="f-subtitle" type="text" placeholder="Short subtitle" />
+    </label>
+    <label>Category
+      <select id="f-category"></select>
+    </label>
+    <label>Size / Importance
+      <select id="f-tier">
+        <option value="1">Hero (large, close)</option>
+        <option value="2">Standard</option>
+        <option value="3">Compact (small, distant)</option>
+      </select>
+    </label>
+    <label>Description
+      <textarea id="f-desc" rows="2" placeholder="One-line summary shown under the title"></textarea>
+    </label>
+    <label>How it was made
+      <textarea id="f-built" rows="2" placeholder="e.g. Built with Claude — static site on GitHub Pages"></textarea>
+    </label>
+    <label>Features <span class="hint-small">one per line</span>
+      <textarea id="f-features" rows="4" placeholder="Feature one&#10;Feature two"></textarea>
+    </label>
+    <label>How to use it
+      <textarea id="f-howto" rows="2" placeholder="Short usage instructions"></textarea>
+    </label>
+    <label>Live URL <span class="hint-small">leave blank if internal/no public link</span>
+      <input id="f-url" type="text" placeholder="https://…" />
+    </label>
+    <label>Image URL <span class="hint-small">leave blank for an auto-generated card</span>
+      <input id="f-image" type="text" placeholder="screenshots/yourfile.png or https://…" />
+    </label>
+    <div class="form-actions">
+      <button id="f-delete">Delete</button>
+      <button id="f-save">Save</button>
+    </div>
   </div>
 
 <script type="module">
@@ -124,66 +228,28 @@ const CATEGORIES = {
   code:       { label: 'Code & Docs',color: 0x94a3b8 },
 };
 
-const PROJECTS = [
+// Emergency fallback only — used if projects.json can't be fetched at all.
+// The real data lives in ./projects.json (or the visitor's local draft).
+const DEFAULT_PROJECTS = [
   { slug:"propertymax-ai", title:"PropertyMax.ai", subtitle:"CEO Command Center MVP", category:"platform", tier:1,
     desc:"Flagship AI-driven property management platform and executive command center prototype.",
-    url:"http://propertymax.ai/" },
-  { slug:"operations-hub", title:"Operations Hub", subtitle:"ApartmentCorp Operations Hub", category:"operations", tier:1,
-    desc:"Central operations portal coordinating day-to-day property management workflows.",
-    url:"https://operationshub-aptcorp.manus.space/" },
-  { slug:"vacancy-report", title:"Vacancy Report", subtitle:"Vacancy Report WebApp", category:"operations", tier:1,
-    desc:"Real-time vacancy tracking and reporting web app across the portfolio.",
-    url:"https://vacancyapp-42vudntx.manus.space/" },
-  { slug:"investor-summary", title:"Investor Summary", subtitle:"Investor Summary Portal", category:"financial", tier:1,
-    desc:"Investor-facing performance summary and reporting portal.",
-    url:"https://investor-summary.manus.space/" },
-  { slug:"monthly-inspections", title:"Monthly Inspections", subtitle:"Inspections Tracker & Checklist", category:"operations", tier:2,
-    desc:"Tracker app for monthly property inspection checklists and compliance.",
-    url:"https://monthlycheck-tukrskz5.manus.space/" },
-  { slug:"inventory-qr", title:"Inventory QR", subtitle:"QR Inventory App", category:"operations", tier:2,
-    desc:"QR-code driven inventory tracking tool for on-site assets.",
-    url:"https://brandonrose2.github.io/qr-inventory-app/" },
-  { slug:"cost-segregation", title:"Cost Segregation", subtitle:"Cost Segregation Study Portal", category:"financial", tier:2,
-    desc:"Web portal supporting cost segregation studies for tax planning.",
-    url:"https://brandonrose2.github.io/cost-segregation-project/" },
-  { slug:"flyer-manus", title:"Flyer Generator [Manus]", subtitle:"Property Flyer Generator", category:"marketing", tier:2,
-    desc:"Standalone PropertyMax tool for creating, printing, and downloading referral flyers.",
-    url:"https://property-flyer-generator.manus.space/" },
-  { slug:"flyer-claude", title:"Flyer Generator [Claude]", subtitle:"PropertyMax Flyer Studio", category:"marketing", tier:2,
-    desc:"Claude-built variant of the property flyer generator tool.",
-    url:"https://brandonrose2.github.io/propertymax-flyer-studio-claude/" },
-  { slug:"loss-to-lease", title:"Loss to Lease", subtitle:"Gates of Manhattan Report", category:"financial", tier:2,
-    desc:"Loss-to-lease reporting app portal for portfolio performance.",
-    url:"https://loss-to-lease.manus.space/portfolio" },
-  { slug:"rental-comps-claude", title:"Rental Comps [Claude]", subtitle:"Rental Comps Portal", category:"operations", tier:2,
-    desc:"Claude-built rental comparables research portal.",
-    url:"https://brandonrose2.github.io/claude-rent-comps/" },
-  { slug:"piano-mastery", title:"Piano Mastery", subtitle:"Piano Composition Mastery", category:"personal", tier:2,
-    desc:"Personal project teaching piano composition fundamentals.",
-    url:"https://piano-composition-mastery.manus.space" },
-  { slug:"edd-audit", title:"EDD Audit Checklist", subtitle:"EDD Prep Checklist Portal", category:"financial", tier:3,
-    desc:"Checklist portal for EDD audit preparation.",
-    url:"https://brandonrose2.github.io/edd-audit-checklist/" },
-  { slug:"report-schedule-builder", title:"Report Schedule Builder", subtitle:"Marc's Report Schedule Builder", category:"operations", tier:3,
-    desc:"Custom reporting system schedule builder for regional teams.",
-    url:"https://marcreport-ypkstjhu.manus.space/" },
-  { slug:"regional-data-collector", title:"Regional Data Collector", subtitle:"Regional Manager Data Collector", category:"operations", tier:3,
-    desc:"Internal data collection tool for regional managers.", url:null },
-  { slug:"property-directory", title:"Property Directory", subtitle:"Property Directory", category:"operations", tier:3,
-    desc:"Internal directory of managed properties.", url:null },
-  { slug:"batch-file-editor", title:"Batch File Editor", subtitle:"Batch File Editor", category:"operations", tier:3,
-    desc:"Internal batch file editing utility.", url:null },
-  { slug:"new-hire-onboarding", title:"New Hire Onboarding", subtitle:"New Hire Onboarding WebApp", category:"operations", tier:3,
-    desc:"Onboarding workflow app for new hires.", url:null },
-  { slug:"peptides", title:"Peptides", subtitle:"Peptides WebApp", category:"personal", tier:3,
-    desc:"Personal side-project web app.", url:null },
-  { slug:"company-contacts", title:"Company Contacts", subtitle:"Notion Workspace", category:"code", tier:3,
-    desc:"Company contacts directory maintained in Notion.", url:null },
-  { slug:"team-workspace", title:"Team Workspace", subtitle:"Notion Workspace", category:"code", tier:3,
-    desc:"Shared internal team workspace in Notion.", url:null },
-  { slug:"github-repos", title:"GitHub Repos", subtitle:"Repositories", category:"code", tier:3,
-    desc:"Source repositories backing these projects.", url:"https://github.com/repos" },
+    builtWith:"", features:[], howToUse:"", url:"http://propertymax.ai/", image:null },
 ];
+
+const STORAGE_KEY = 'portfolio_projects_v1';
+let PROJECTS = [];
+
+async function loadProjects(){
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved){
+    try { return JSON.parse(saved); } catch(e) { /* corrupt draft, ignore */ }
+  }
+  try {
+    const res = await fetch('./projects.json', { cache: 'no-store' });
+    if (res.ok) return await res.json();
+  } catch(e) { /* fetch unavailable, e.g. opened via file:// */ }
+  return DEFAULT_PROJECTS;
+}
 
 /* ---------------------------------------------------------------------
    SCENE — bare-minimum geometry, tight camera bounds, fog for depth cue
@@ -286,52 +352,129 @@ function getGlowTexture(colorHex){
   return tex;
 }
 
+/* placeholder card — drawn when a project has no resolvable image,
+   mirrors the look of the pre-rendered screenshot cards */
+function makePlaceholderTexture(p){
+  const w = 960, h = 640, chromeH = 56;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const color = CATEGORIES[p.category]?.color ?? 0x94a3b8;
+  const rgb = `${(color >> 16) & 255}, ${(color >> 8) & 255}, ${color & 255}`;
+
+  ctx.fillStyle = '#11131c';
+  roundRectPath(ctx, 0, 0, w, h, 26);
+  ctx.fill();
+
+  const grad = ctx.createLinearGradient(0, chromeH, 0, h);
+  grad.addColorStop(0, `rgba(${rgb}, 0.18)`);
+  grad.addColorStop(1, `rgba(${rgb}, 0)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, chromeH, w, h - chromeH);
+
+  ctx.fillStyle = '#11131c';
+  ctx.fillRect(0, 0, w, chromeH);
+  [['#ff5f56',22], ['#ffbd2e',44], ['#27c93f',66]].forEach(([c, cx]) => {
+    ctx.beginPath(); ctx.arc(cx, chromeH/2, 6, 0, Math.PI*2); ctx.fillStyle = c; ctx.fill();
+  });
+
+  const cx = w/2, cy = chromeH + (h - chromeH)/2 - 30;
+  ctx.strokeStyle = `rgba(${rgb}, 1)`; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = `rgba(${rgb}, 1)`;
+  ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI*2); ctx.fill();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#eef1fb';
+  ctx.font = '600 40px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(p.title, cx, cy + 68);
+  ctx.fillStyle = '#949eb8';
+  ctx.font = '20px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(p.subtitle || '', cx, cy + 106);
+  ctx.fillStyle = '#6e768c';
+  ctx.fillText('No public preview', cx, cy + 140);
+
+  // border
+  ctx.strokeStyle = `rgba(${rgb}, 0.9)`; ctx.lineWidth = 4;
+  roundRectPath(ctx, 2, 2, w - 4, h - 4, 24);
+  ctx.stroke();
+
+  return new THREE.CanvasTexture(canvas);
+}
+function roundRectPath(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const nodes = [];       // { card, glow, project, baseWidth, baseHeight }
 const raycastTargets = [];
-const tierCounts = { 1: 0, 2: 0, 3: 0 };
 
-PROJECTS.forEach(p => {
-  const cfg = TIER_CONFIG[p.tier];
-  const idx = tierCounts[p.tier]++;
-  const angle = idx * GOLDEN_ANGLE + p.tier; // offset per tier so rings don't align
-  const jitterY = Math.sin(idx * 12.9898) * 0.5;
-  const color = CATEGORIES[p.category].color;
+function disposeNode(n){
+  scene.remove(n.card, n.glow);
+  n.card.material.map?.dispose();
+  n.card.material.dispose();
+  n.glow.material.dispose(); // glow's texture is cached/shared — not disposed here
+}
 
-  const width = cfg.width;
-  const height = width * CARD_ASPECT;
-  const position = new THREE.Vector3(
-    Math.cos(angle) * cfg.radius,
-    cfg.y + jitterY,
-    Math.sin(angle) * cfg.radius
-  );
+function rebuildScene(){
+  nodes.forEach(disposeNode);
+  nodes.length = 0;
+  raycastTargets.length = 0;
+  const tierCounts = { 1: 0, 2: 0, 3: 0 };
 
-  /* glow — soft radial category-color halo, rendered behind the card */
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: getGlowTexture(color), transparent: true, depthWrite: false,
-  }));
-  const glowSize = Math.max(width, height) * 1.6;
-  glow.scale.set(glowSize, glowSize, 1);
-  glow.position.copy(position);
-  glow.renderOrder = 0;
-  scene.add(glow);
+  PROJECTS.forEach(p => {
+    const cfg = TIER_CONFIG[p.tier] ?? TIER_CONFIG[3];
+    const idx = tierCounts[p.tier] = (tierCounts[p.tier] ?? 0) + 1;
+    const angle = idx * GOLDEN_ANGLE + p.tier; // offset per tier so rings don't align
+    const jitterY = Math.sin(idx * 12.9898) * 0.5;
+    const color = CATEGORIES[p.category]?.color ?? 0x94a3b8;
 
-  /* card — live screenshot texture, always faces the camera */
-  const card = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: textureLoader.load(`./screenshots/${p.slug}.png`),
-    transparent: true, depthWrite: false,
-  }));
-  card.scale.set(width, height, 1);
-  card.position.copy(position);
-  card.renderOrder = 1;
-  card.userData.project = p;
-  card.userData.baseY = position.y;
-  card.userData.phase = idx;
-  scene.add(card);
-  raycastTargets.push(card);
+    const width = cfg.width;
+    const height = width * CARD_ASPECT;
+    const position = new THREE.Vector3(
+      Math.cos(angle) * cfg.radius,
+      cfg.y + jitterY,
+      Math.sin(angle) * cfg.radius
+    );
 
-  nodes.push({ card, glow, project: p, baseWidth: width, baseHeight: height });
-});
+    /* glow — soft radial category-color halo, rendered behind the card */
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: getGlowTexture(color), transparent: true, depthWrite: false,
+    }));
+    const glowSize = Math.max(width, height) * 1.6;
+    glow.scale.set(glowSize, glowSize, 1);
+    glow.position.copy(position);
+    glow.renderOrder = 0;
+    scene.add(glow);
+
+    /* card — screenshot/custom image, falling back to a generated
+       placeholder if no image resolves (no url, 404, etc.) */
+    const card = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
+    const imageUrl = p.image || `./screenshots/${p.slug}.png`;
+    card.material.map = textureLoader.load(
+      imageUrl,
+      undefined,
+      undefined,
+      () => { card.material.map = makePlaceholderTexture(p); card.material.needsUpdate = true; }
+    );
+    card.scale.set(width, height, 1);
+    card.position.copy(position);
+    card.renderOrder = 1;
+    card.userData.project = p;
+    card.userData.baseY = position.y;
+    card.userData.phase = idx;
+    scene.add(card);
+    raycastTargets.push(card);
+
+    nodes.push({ card, glow, project: p, baseWidth: width, baseHeight: height });
+  });
+}
 
 /* ---------------------------------------------------------------------
    INTERACTION — raycast hover + click, category filter, detail panel
@@ -372,21 +515,47 @@ function onClick(e){
   raycaster.setFromCamera(pointer, camera);
   const hit = raycaster.intersectObjects(raycastTargets, false)[0]?.object ?? null;
   if (!hit) return;
-  selectedCard = hit;
-  openPanel(hit.userData.project);
+  if (editMode){
+    openEditForm(hit.userData.project);
+  } else {
+    selectedCard = hit;
+    openPanel(hit.userData.project);
+  }
 }
 
 renderer.domElement.addEventListener('pointermove', onPointerMove);
 renderer.domElement.addEventListener('pointerdown', markInteracting);
 renderer.domElement.addEventListener('click', onClick);
 
+function fillList(ul, items){
+  ul.innerHTML = '';
+  (items || []).filter(Boolean).forEach(text => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    ul.appendChild(li);
+  });
+}
+
 function openPanel(p){
+  editPanel.classList.remove('open');
   const cat = CATEGORIES[p.category];
-  document.getElementById('d-cat').textContent = cat.label;
-  document.querySelector('#detail-panel .cat-badge .dot').style.background = `#${cat.color.toString(16).padStart(6,'0')}`;
+  document.getElementById('d-cat').textContent = cat?.label ?? p.category;
+  document.querySelector('#detail-panel .cat-badge .dot').style.background =
+    `#${(cat?.color ?? 0x94a3b8).toString(16).padStart(6,'0')}`;
   document.getElementById('d-title').textContent = p.title;
   document.getElementById('d-subtitle').textContent = p.subtitle;
   document.getElementById('d-desc').textContent = p.desc;
+
+  document.getElementById('d-built-block').style.display = p.builtWith ? '' : 'none';
+  document.getElementById('d-built').textContent = p.builtWith || '';
+
+  const hasFeatures = p.features && p.features.filter(Boolean).length > 0;
+  document.getElementById('d-features-block').style.display = hasFeatures ? '' : 'none';
+  fillList(document.getElementById('d-features'), p.features);
+
+  document.getElementById('d-howto-block').style.display = p.howToUse ? '' : 'none';
+  document.getElementById('d-howto').textContent = p.howToUse || '';
+
   const launch = document.getElementById('d-launch');
   if (p.url){
     launch.href = p.url;
@@ -405,6 +574,117 @@ document.getElementById('closePanel').addEventListener('click', () => {
   panel.classList.remove('open');
   selectedCard = null;
 });
+
+/* ---------------------------------------------------------------------
+   EDIT MODE — add/edit/remove projects, persisted to localStorage.
+   Off by default: regular visitors always see the read-only view above.
+--------------------------------------------------------------------- */
+let editMode = false;
+let editingProject = null;
+const editPanel = document.getElementById('edit-panel');
+const editToggleBtn = document.getElementById('editToggle');
+const categorySelect = document.getElementById('f-category');
+Object.entries(CATEGORIES).forEach(([key, cfg]) => {
+  const opt = document.createElement('option');
+  opt.value = key; opt.textContent = cfg.label;
+  categorySelect.appendChild(opt);
+});
+
+function slugify(str, ignoreProject){
+  const base = str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'project';
+  let slug = base, n = 2;
+  while (PROJECTS.some(p => p.slug === slug && p !== ignoreProject)) slug = `${base}-${n++}`;
+  return slug;
+}
+
+function openEditForm(project){
+  panel.classList.remove('open');
+  editingProject = project;
+  document.getElementById('edit-heading').textContent = project ? 'Edit Project' : 'Add Project';
+  document.getElementById('f-title').value = project?.title || '';
+  document.getElementById('f-subtitle').value = project?.subtitle || '';
+  categorySelect.value = project?.category || 'operations';
+  document.getElementById('f-tier').value = String(project?.tier || 2);
+  document.getElementById('f-desc').value = project?.desc || '';
+  document.getElementById('f-built').value = project?.builtWith || '';
+  document.getElementById('f-features').value = (project?.features || []).join('\n');
+  document.getElementById('f-howto').value = project?.howToUse || '';
+  document.getElementById('f-url').value = project?.url || '';
+  document.getElementById('f-image').value = project?.image || '';
+  document.getElementById('f-delete').style.display = project ? '' : 'none';
+  editPanel.classList.add('open');
+}
+function closeEditForm(){
+  editPanel.classList.remove('open');
+  editingProject = null;
+}
+
+document.getElementById('closeEditPanel').addEventListener('click', closeEditForm);
+document.getElementById('addProjectBtn').addEventListener('click', () => openEditForm(null));
+
+document.getElementById('f-save').addEventListener('click', () => {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title){ alert('Title is required.'); return; }
+  const data = {
+    slug: editingProject ? editingProject.slug : slugify(title),
+    title,
+    subtitle: document.getElementById('f-subtitle').value.trim(),
+    category: categorySelect.value,
+    tier: Number(document.getElementById('f-tier').value),
+    desc: document.getElementById('f-desc').value.trim(),
+    builtWith: document.getElementById('f-built').value.trim(),
+    features: document.getElementById('f-features').value.split('\n').map(s => s.trim()).filter(Boolean),
+    howToUse: document.getElementById('f-howto').value.trim(),
+    url: document.getElementById('f-url').value.trim() || null,
+    image: document.getElementById('f-image').value.trim() || null,
+  };
+  if (editingProject) Object.assign(editingProject, data);
+  else PROJECTS.push(data);
+  saveProjectsLocal();
+  rebuildScene();
+  closeEditForm();
+});
+
+document.getElementById('f-delete').addEventListener('click', () => {
+  if (!editingProject) return;
+  if (!confirm(`Remove "${editingProject.title}" from the portfolio?`)) return;
+  PROJECTS = PROJECTS.filter(p => p !== editingProject);
+  saveProjectsLocal();
+  rebuildScene();
+  closeEditForm();
+});
+
+function saveProjectsLocal(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(PROJECTS));
+  updateDraftBadge();
+}
+function updateDraftBadge(){
+  const badge = document.getElementById('draftBadge');
+  badge.textContent = localStorage.getItem(STORAGE_KEY) ? '● local draft active' : '';
+}
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(PROJECTS, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'projects.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Discard your local draft and reload the published projects.json?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+editToggleBtn.addEventListener('click', () => {
+  editMode = !editMode;
+  document.body.classList.toggle('edit-mode', editMode);
+  editToggleBtn.classList.toggle('active', editMode);
+  editToggleBtn.textContent = editMode ? '✎ Editing…' : '✎ Edit Mode';
+  document.querySelector('#hud .hint').textContent = editMode
+    ? 'Edit Mode — click a card to edit it, or Add Project below'
+    : 'Drag to orbit · Scroll to zoom · Click a node to open a project';
+});
+updateDraftBadge();
 
 /* category filter pills */
 const filtersEl = document.getElementById('filters');
@@ -476,7 +756,15 @@ function animate(){
   controls.update();
   renderer.render(scene, camera);
 }
-animate();
+
+/* ---------------------------------------------------------------------
+   BOOTSTRAP
+--------------------------------------------------------------------- */
+(async function init(){
+  PROJECTS = await loadProjects();
+  rebuildScene();
+  animate();
+})();
 </script>
 </body>
 </html>
