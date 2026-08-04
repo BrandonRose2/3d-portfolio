@@ -21,10 +21,9 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;width:100%;height:100%;background:var(--bg);overflow:hidden;
     font-family:'Segoe UI',ui-sans-serif,system-ui,-apple-system,sans-serif;color:var(--text);}
-  #bg-art{position:fixed;inset:0;z-index:0;
-    background:url('./assets/dali-bg.jpg') center 18%/cover no-repeat;
-    opacity:0.12;}
-  #bg-art::after{content:'';position:absolute;inset:0;
+  #bg-art-wrap{position:fixed;inset:0;z-index:0;opacity:0.22;overflow:hidden;}
+  #bg-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%;}
+  #bg-art-wrap::after{content:'';position:absolute;inset:0;
     background:radial-gradient(ellipse at 50% 38%, transparent 30%, var(--bg) 90%);}
   #scene-container{position:fixed;inset:0;z-index:1;}
   #scene-container canvas{display:block;cursor:grab;}
@@ -134,7 +133,11 @@
 </head>
 <body>
 
-  <div id="bg-art"></div>
+  <div id="bg-art-wrap">
+    <video id="bg-art" autoplay muted loop playsinline poster="./assets/dali-bg.jpg">
+      <source src="./assets/dali-bg.mp4" type="video/mp4">
+    </video>
+  </div>
   <div id="scene-container"></div>
 
   <div id="hud">
