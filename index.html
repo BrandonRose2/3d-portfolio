@@ -374,17 +374,19 @@ controls.maxDistance = 34;
 // Restrict vertical rotation to keep the cinematic horizon intact.
 controls.minPolarAngle = Math.PI * 0.38;
 controls.maxPolarAngle = Math.PI * 0.62;
-controls.autoRotate = false; // We manually rotate the carouselGroup instead
+// Camera auto-rotation must remain off: only the card group drifts.
+controls.autoRotate = false;
 controls.target.set(0, 0.5, 0);
 
 // Idle-based carousel motion: pause for drag, wheel, or pinch interaction, then resume cleanly.
 let idleTimer = null;
+let carouselDrifting = true;
 function markInteracting(){
-  controls.autoRotate = false;
+  carouselDrifting = false;
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
     idleTimer = null;
-    if (!selectedCard) controls.autoRotate = true;
+    if (!selectedCard) carouselDrifting = true;
   }, 2200);
 }
 controls.addEventListener('start', markInteracting);
@@ -1106,18 +1108,16 @@ const clock = new THREE.Clock();
       }
     });
 
-    // If a card is selected, stop auto-rotating and let the user interact with the detail panel
+    // Selection pauses the card group while OrbitControls remains available for browsing.
     if (selectedCard) {
-      controls.autoRotate = false;
+      carouselDrifting = false;
     } else if (!idleTimer) {
-      controls.autoRotate = true;
+      carouselDrifting = true;
     }
 
-    // Apply the auto-rotation to the carousel group rather than the camera controls
-    // to allow the active card to break out of the rotation orbit.
-    if (controls.autoRotate && !selectedCard) {
-      // A near-imperceptible gallery creep: motion is felt over time, never rushed.
-      carouselGroup.rotation.y += 0.000035;
+    // Only the card group moves—never the camera. This is intentionally an ambient drift.
+    if (carouselDrifting && !selectedCard) {
+      carouselGroup.rotation.y += 0.000008;
     }
 
     updateRoseLamp();
