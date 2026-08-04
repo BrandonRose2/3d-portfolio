@@ -624,12 +624,69 @@ function makeUrlPreviewTexture(p){
   return texture;
 }
 
+function makeLivePreviewTexture(p, image){
+  const w = 960, h = 640, chromeH = 56;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const color = CATEGORIES[p.category]?.color ?? 0x94a3b8;
+  const colorHex = `#${color.toString(16).padStart(6, '0')}`;
+  let hostname = p.url || '';
+  try { hostname = new URL(p.url).hostname.replace(/^www\./, ''); } catch(e) { /* retain raw URL */ }
+
+  // Website screenshot beneath a consistent browser frame and legible brand label.
+  ctx.fillStyle = '#11131c';
+  roundRectPath(ctx, 0, 0, w, h, 26);
+  ctx.fill();
+  ctx.save();
+  roundRectPath(ctx, 0, 0, w, h, 26);
+  ctx.clip();
+  ctx.drawImage(image, 0, chromeH, w, h - chromeH);
+  const lowerFade = ctx.createLinearGradient(0, h * 0.56, 0, h);
+  lowerFade.addColorStop(0, 'rgba(5,7,12,0)');
+  lowerFade.addColorStop(1, 'rgba(5,7,12,0.94)');
+  ctx.fillStyle = lowerFade;
+  ctx.fillRect(0, chromeH, w, h - chromeH);
+  ctx.restore();
+
+  ctx.fillStyle = '#11131c';
+  ctx.fillRect(0, 0, w, chromeH);
+  [['#ff5f56',22], ['#ffbd2e',44], ['#27c93f',66]].forEach(([c, cx]) => {
+    ctx.beginPath(); ctx.arc(cx, chromeH / 2, 6, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
+  });
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  roundRectPath(ctx, 106, 15, 676, 26, 13); ctx.fill();
+  ctx.fillStyle = '#aeb7cc';
+  ctx.font = '14px Segoe UI, -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(hostname, 122, 33);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = colorHex;
+  ctx.font = '600 15px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText('LIVE SITE PREVIEW', w / 2, h - 94);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '600 31px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(p.title, w / 2, h - 54);
+  ctx.fillStyle = '#c0c8da';
+  ctx.font = '18px Segoe UI, -apple-system, sans-serif';
+  ctx.fillText(hostname, w / 2, h - 26);
+
+  ctx.strokeStyle = colorHex;
+  ctx.lineWidth = 4;
+  roundRectPath(ctx, 2, 2, w - 4, h - 4, 24);
+  ctx.stroke();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 function shouldUseUrlPreview(p){
   if (!p.url) return false;
-  // An edited live URL deliberately takes precedence over a pre-existing image.
-  if (p.previewMode === 'url') return true;
-  // Preserve a safe fallback for legacy internal projects whose owners add a URL.
-  return !p.image && /Internal tool — no public deployment/.test(p.builtWith || '');
+  // Every URL-backed project receives a live preview by default, including
+  // Notion, internal, and legacy entries such as Company Contacts. A custom
+  // Preview Image URL is the only explicit override.
+  return p.previewMode === 'url' || !p.image;
 }
 
 function getLiveThumbnailUrl(url){
@@ -660,11 +717,13 @@ function applyPreviewTexture(card, p){
     imageUrl,
     (texture) => {
       if (card.userData.project !== p) { texture.dispose(); return; }
-      texture.colorSpace = THREE.SRGBColorSpace;
+      const nextTexture = useUrlPreview ? makeLivePreviewTexture(p, texture.image) : texture;
+      if (!useUrlPreview) nextTexture.colorSpace = THREE.SRGBColorSpace;
+      if (useUrlPreview) texture.dispose();
       const previousTexture = card.material.map;
-      card.material.map = texture;
+      card.material.map = nextTexture;
       card.material.needsUpdate = true;
-      if (previousTexture && previousTexture !== texture) previousTexture.dispose();
+      if (previousTexture && previousTexture !== nextTexture) previousTexture.dispose();
     },
     undefined,
     () => {
