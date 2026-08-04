@@ -64,13 +64,15 @@
   #hud h1 span{font-family:'Segoe UI',system-ui,sans-serif;font-size:16px;color:var(--text-dim);font-weight:400;display:block;margin-top:2px;}
   #hud .hint{margin:2px 0 0;font-size:12px;color:var(--text-dim);}
 
-  #music-control{display:flex;align-items:center;gap:12px;pointer-events:auto;margin-top:12px;}
+  #music-control{display:none;align-items:center;gap:8px;pointer-events:auto;margin-top:12px;flex-wrap:wrap;}
+  body.edit-mode #music-control{display:flex;}
   #music-control input{
     font:inherit;font-size:13px;color:var(--text);background:rgba(255,255,255,0.06);
     border:1px solid var(--panel-border);border-radius:999px;padding:6px 14px;width:240px;
     transition:border-color .15s ease;
   }
   #music-control input:focus{outline:none;border-color:rgba(255,255,255,0.35);}
+  #music-status{font-size:11px;color:var(--text-dim);flex-basis:100%;}
   #music-player-container{position:fixed;bottom:28px;left:28px;z-index:15;pointer-events:auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:opacity 0.3s ease;}
 
   #filters{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto;}
@@ -181,9 +183,11 @@
       </div>
       <button class="pill liquid-glass" id="editToggle">✎ Edit Mode</button>
     </div>
-    <div id="music-control">
-      <input type="text" id="spotify-link" placeholder="Paste a Spotify song or playlist link..." />
-      <button class="pill liquid-glass" id="play-spotify">Play</button>
+    <div id="music-control" aria-label="Default visitor soundtrack settings">
+      <input type="text" id="spotify-link" placeholder="Paste the site-wide Spotify song, album, or playlist link..." />
+      <button class="pill liquid-glass" id="save-spotify">Set Default Soundtrack</button>
+      <button class="pill liquid-glass" id="export-music-settings">Export music setting</button>
+      <span id="music-status" aria-live="polite"></span>
     </div>
     <div id="filters"></div>
     <div id="editToolbar">
@@ -287,7 +291,26 @@ const DEFAULT_PROJECTS = [
 ];
 
 const STORAGE_KEY = 'portfolio_projects_v1';
+const SITE_CONFIG_STORAGE_KEY = 'portfolio_site_config_v1';
 let PROJECTS = [];
+let SITE_CONFIG = { spotifyUrl: '' };
+
+async function loadSiteConfig(){
+  const saved = localStorage.getItem(SITE_CONFIG_STORAGE_KEY);
+  if (saved){
+    try { return { ...SITE_CONFIG, ...JSON.parse(saved) }; } catch(e) { /* corrupt draft, ignore */ }
+  }
+  try {
+    const res = await fetch('./site-config.json', { cache: 'no-store' });
+    if (res.ok) return { ...SITE_CONFIG, ...await res.json() };
+  } catch(e) { /* fetch unavailable, e.g. opened via file:// */ }
+  return SITE_CONFIG;
+}
+
+function saveSiteConfigLocal(){
+  localStorage.setItem(SITE_CONFIG_STORAGE_KEY, JSON.stringify(SITE_CONFIG));
+  updateDraftBadge();
+}
 
 async function loadProjects(){
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -317,7 +340,7 @@ const camera = new THREE.PerspectiveCamera(
   45, window.innerWidth / window.innerHeight, 0.1, 80
 );
 // Lower, more cinematic angle looking slightly up at the carousel
-camera.position.set(0, 2, 28);
+camera.position.set(0, 1.6, 25.5);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setClearColor(0x000000, 0);
@@ -383,30 +406,101 @@ renderer.domElement.addEventListener('wheel', markInteracting, { passive: true }
   scene.add(ring);
 });
 
-/* "the rose as a lamp" — a warm glow sitting above the cluster, aligned
-   with the rose in the ./assets/dali-bg.jpg backdrop, so the constellation
-   of project cards reads as if lit from that point overhead */
+/* "the rose as a lamp" — a warm spotlight falls from the rose onto the
+   featured app, with the active card receiving the brightest halo. */
+const roseLampSource = new THREE.Vector3(0, 12, -3);
+const roseLampTarget = new THREE.Vector3(0, 0, 0);
+const roseLampDirection = new THREE.Vector3();
+const roseLampMidpoint = new THREE.Vector3();
+const roseLampNdc = new THREE.Vector3();
+const roseLampUp = new THREE.Vector3(0, 1, 0);
+let roseLampGlow;
+let roseLampBeam;
+let roseLampSpot;
+
 (function addLampGlow(){
   const size = 512;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  grad.addColorStop(0,   'rgba(255, 214, 170, 0.4)');
-  grad.addColorStop(0.4, 'rgba(255, 170, 110, 0.12)');
-  grad.addColorStop(1,   'rgba(255, 170, 110, 0)');
+  grad.addColorStop(0,   'rgba(255, 235, 191, 0.82)');
+  grad.addColorStop(0.26,'rgba(255, 193, 113, 0.38)');
+  grad.addColorStop(0.65,'rgba(255, 156, 71, 0.08)');
+  grad.addColorStop(1,   'rgba(255, 156, 71, 0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
+  const lampTexture = new THREE.CanvasTexture(canvas);
 
-  const lamp = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false,
+  roseLampGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: lampTexture, transparent: true, depthWrite: false,
     blending: THREE.AdditiveBlending, fog: false,
   }));
-  lamp.scale.set(11, 11, 1);
-  lamp.position.set(0, 12, -3);
-  lamp.renderOrder = -1;
-  scene.add(lamp);
+  roseLampGlow.scale.set(12, 12, 1);
+  roseLampGlow.position.copy(roseLampSource);
+  roseLampGlow.renderOrder = -1;
+  scene.add(roseLampGlow);
+
+  roseLampBeam = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 2.7, 1, 32, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0xffd29a, transparent: true, opacity: 0.035,
+      depthWrite: false, depthTest: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    })
+  );
+  roseLampBeam.renderOrder = -2;
+  scene.add(roseLampBeam);
+
+  roseLampSpot = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: lampTexture, transparent: true, depthWrite: false, depthTest: false,
+    blending: THREE.AdditiveBlending, fog: false, opacity: 0.64,
+  }));
+  roseLampSpot.scale.set(6.8, 6.8, 1);
+  roseLampSpot.renderOrder = 8;
+  scene.add(roseLampSpot);
 })();
+
+function updateRoseLamp(){
+  if (!nodes.length) return;
+  let featuredNode = null;
+
+  if (selectedCard) {
+    featuredNode = nodes.find((node) => node.card === selectedCard) || null;
+  }
+
+  // When no card is pinned open, spotlight whichever app is closest to the visual center.
+  if (!featuredNode) {
+    let bestScore = Infinity;
+    nodes.forEach((node) => {
+      node.card.getWorldPosition(roseLampNdc);
+      roseLampNdc.project(camera);
+      if (roseLampNdc.z < -1 || roseLampNdc.z > 1) return;
+      const score = Math.abs(roseLampNdc.x) * 1.4 + Math.abs(roseLampNdc.y - 0.05);
+      if (score < bestScore) {
+        bestScore = score;
+        featuredNode = node;
+      }
+    });
+  }
+
+  if (!featuredNode) return;
+  featuredNode.card.getWorldPosition(roseLampTarget);
+  roseLampSpot.position.lerp(roseLampTarget, 0.085);
+  const spotSize = selectedCard ? 8.4 : 6.1;
+  roseLampSpot.scale.lerp(new THREE.Vector3(spotSize, spotSize, 1), 0.1);
+  roseLampSpot.material.opacity += ((selectedCard ? 0.9 : 0.48) - roseLampSpot.material.opacity) * 0.12;
+
+  roseLampDirection.copy(roseLampTarget).sub(roseLampSource);
+  const beamLength = roseLampDirection.length();
+  if (beamLength > 0.01) {
+    roseLampMidpoint.copy(roseLampSource).addScaledVector(roseLampDirection, 0.5);
+    roseLampBeam.position.copy(roseLampMidpoint);
+    roseLampBeam.scale.set(1, beamLength, 1);
+    roseLampBeam.quaternion.setFromUnitVectors(roseLampUp, roseLampDirection.normalize());
+    roseLampBeam.material.opacity += ((selectedCard ? 0.08 : 0.028) - roseLampBeam.material.opacity) * 0.1;
+  }
+  roseLampGlow.material.opacity += ((selectedCard ? 0.9 : 0.58) - roseLampGlow.material.opacity) * 0.1;
+}
 
 /* ---------------------------------------------------------------------
    NODES — "asymmetric-yield" layout: importance (tier) drives both
@@ -754,7 +848,10 @@ function saveProjectsLocal(){
 }
 function updateDraftBadge(){
   const badge = document.getElementById('draftBadge');
-  badge.textContent = localStorage.getItem(STORAGE_KEY) ? '● local draft active' : '';
+  const parts = [];
+  if (localStorage.getItem(STORAGE_KEY)) parts.push('projects draft');
+  if (localStorage.getItem(SITE_CONFIG_STORAGE_KEY)) parts.push('soundtrack draft');
+  badge.textContent = parts.length ? `● local ${parts.join(' + ')} active` : '';
 }
 document.getElementById('exportBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(PROJECTS, null, 2)], { type: 'application/json' });
@@ -765,8 +862,9 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
 });
 document.getElementById('resetBtn').addEventListener('click', () => {
-  if (!confirm('Discard your local draft and reload the published projects.json?')) return;
+  if (!confirm('Discard your local project and soundtrack drafts, then reload the published site?')) return;
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(SITE_CONFIG_STORAGE_KEY);
   location.reload();
 });
 editToggleBtn.addEventListener('click', () => {
@@ -775,8 +873,12 @@ editToggleBtn.addEventListener('click', () => {
   editToggleBtn.classList.toggle('active', editMode);
   editToggleBtn.textContent = editMode ? '✎ Editing…' : '✎ Edit Mode';
   document.querySelector('#hud .hint').textContent = editMode
-    ? 'Edit Mode — click a card to edit it, or Add Project below'
+    ? 'Edit Mode — set the default soundtrack, edit a card, or add a project below'
     : 'Drag to orbit · Scroll to zoom · Click a node to open a project';
+  if (editMode) {
+    spotifyInput.value = SITE_CONFIG.spotifyUrl || '';
+    updateMusicStatus();
+  }
 });
 updateDraftBadge();
 
@@ -900,45 +1002,72 @@ const clock = new THREE.Clock();
     // Apply the auto-rotation to the carousel group rather than the camera controls
     // to allow the active card to break out of the rotation orbit.
     if (controls.autoRotate && !selectedCard) {
-      carouselGroup.rotation.y += 0.002;
+      // A calm gallery pace that leaves enough time to recognize each app preview.
+      carouselGroup.rotation.y += 0.00065;
     }
 
+    updateRoseLamp();
     controls.update();
     renderer.render(scene, camera);
   }
 
 /* ---------------------------------------------------------------------
-   SPOTIFY MUSIC CONTROL
+   DEFAULT SPOTIFY SOUNDTRACK — site owners set the URL in Edit Mode.
+   The published site reads site-config.json so every visitor sees one
+   consistent player; browser autoplay policies still require a play click.
 --------------------------------------------------------------------- */
 const spotifyInput = document.getElementById('spotify-link');
-const playSpotifyBtn = document.getElementById('play-spotify');
+const saveSpotifyBtn = document.getElementById('save-spotify');
+const exportMusicBtn = document.getElementById('export-music-settings');
+const musicStatus = document.getElementById('music-status');
 const playerContainer = document.getElementById('music-player-container');
 
-function loadSpotify() {
-  const link = spotifyInput.value.trim();
-  if (!link) return;
-
-  // Extract track/playlist ID from share links
-  // e.g., https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=...
-  const match = link.match(/spotify\.com\/(track|playlist|album)\/([a-zA-Z0-9]+)/);
-  if (!match) {
-    alert('Please paste a valid Spotify share link.');
-    return;
-  }
-
-  const type = match[1];
-  const id = match[2];
-
-  playerContainer.innerHTML = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" width="300" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
-  playerContainer.style.opacity = '1';
-
-  spotifyInput.value = '';
-  spotifyInput.placeholder = 'Playing background music...';
+function parseSpotifyLink(link){
+  const match = (link || '').trim().match(/spotify\.com\/(track|playlist|album|artist|show|episode)\/([a-zA-Z0-9]+)/);
+  return match ? { type: match[1], id: match[2] } : null;
 }
 
-playSpotifyBtn.addEventListener('click', loadSpotify);
+function renderMusicPlayer(){
+  const parsed = parseSpotifyLink(SITE_CONFIG.spotifyUrl);
+  if (!parsed){
+    playerContainer.replaceChildren();
+    playerContainer.style.opacity = '0';
+    return;
+  }
+  playerContainer.innerHTML = `<iframe title="Portfolio soundtrack" style="border-radius:12px" src="https://open.spotify.com/embed/${parsed.type}/${parsed.id}?utm_source=generator&theme=0" width="300" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+  playerContainer.style.opacity = '1';
+}
+
+function updateMusicStatus(){
+  const parsed = parseSpotifyLink(SITE_CONFIG.spotifyUrl);
+  musicStatus.textContent = parsed
+    ? `Default ${parsed.type} soundtrack is set. Export site-config.json to publish this setting.`
+    : 'No default soundtrack is set yet.';
+}
+
+function saveDefaultSoundtrack(){
+  const link = spotifyInput.value.trim();
+  if (!parseSpotifyLink(link)){
+    alert('Please paste a valid Spotify track, playlist, album, artist, show, or episode share link.');
+    return;
+  }
+  SITE_CONFIG.spotifyUrl = link;
+  saveSiteConfigLocal();
+  renderMusicPlayer();
+  updateMusicStatus();
+}
+
+saveSpotifyBtn.addEventListener('click', saveDefaultSoundtrack);
 spotifyInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') loadSpotify();
+  if (e.key === 'Enter') saveDefaultSoundtrack();
+});
+exportMusicBtn.addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ spotifyUrl: SITE_CONFIG.spotifyUrl || '' }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'site-config.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
 });
 
 /* ---------------------------------------------------------------------
@@ -946,7 +1075,10 @@ spotifyInput.addEventListener('keydown', (e) => {
 --------------------------------------------------------------------- */
 (async function init(){
   PROJECTS = await loadProjects();
+  SITE_CONFIG = await loadSiteConfig();
   rebuildScene();
+  renderMusicPlayer();
+  updateMusicStatus();
   animate();
 
 })();
