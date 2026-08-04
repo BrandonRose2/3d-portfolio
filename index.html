@@ -87,7 +87,9 @@
   #music-control input:focus{outline:none;border-color:rgba(255,255,255,0.35);}
   #music-status{font-size:11px;color:var(--text-dim);flex-basis:100%;}
   /* The Spotify controller is present for visitor playback but has no visible homepage box. */
-  #music-player-container{position:fixed;left:-9999px;bottom:0;width:1px;height:1px;z-index:-1;
+  /* Keep a real 300 × 80 player off-screen: Spotify's controller may not
+     initialize in a 1-pixel container, but visitors still never see a box. */
+  #music-player-container{position:fixed;left:-10000px;bottom:0;width:300px;height:80px;z-index:-1;
     opacity:0;pointer-events:none;overflow:hidden;border-radius:12px;transition:opacity .3s ease;}
   body.edit-mode #music-player-container{left:28px;bottom:28px;width:300px;height:80px;z-index:15;
     opacity:1;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);}
@@ -357,9 +359,9 @@ scene.fog = new THREE.FogExp2(0x030308, 0.028);
 const camera = new THREE.PerspectiveCamera(
   45, window.innerWidth / window.innerHeight, 0.1, 80
 );
-// Reference framing: a closer, lower opening view that puts the app gallery
-// across the lower stage while preserving the rose and piano above it.
-camera.position.set(0, 1.25, 23.0);
+// Opening composition: a slightly larger, three-quarter view lets several
+// app previews read together across the lower stage beneath the rose lamp.
+camera.position.set(3.1, 1.45, 21.2);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setClearColor(0x000000, 0);
@@ -374,14 +376,14 @@ controls.enablePan = false;
 controls.enableZoom = true;
 controls.zoomSpeed = 0.28;
 // Keep the carousel large enough to read, but prevent app previews from clipping at close range.
-controls.minDistance = 20;
+controls.minDistance = 18;
 controls.maxDistance = 34;
 // Restrict vertical rotation to keep the cinematic horizon intact.
 controls.minPolarAngle = Math.PI * 0.38;
 controls.maxPolarAngle = Math.PI * 0.62;
 // Camera auto-rotation must remain off: only the card group drifts.
 controls.autoRotate = false;
-controls.target.set(0, -0.1, 0);
+controls.target.set(0, -0.18, 0);
 
 // Idle-based carousel motion: pause for drag, wheel, or pinch interaction, then resume cleanly.
 let idleTimer = null;
@@ -1248,6 +1250,7 @@ let spotifyController = null;
 let spotifyApiPromise = null;
 let soundtrackStarted = false;
 let soundtrackGestureArmed = false;
+let visitorInteracted = false;
 
 function loadSpotifyIframeApi(){
   if (spotifyApiPromise) return spotifyApiPromise;
@@ -1265,18 +1268,28 @@ function loadSpotifyIframeApi(){
   return spotifyApiPromise;
 }
 
-function attemptSoundtrackPlayback(){
+function attemptSoundtrackPlayback(fromGesture = false){
   if (!spotifyController || soundtrackStarted) return;
-  try { spotifyController.play(); } catch(e) { /* browser will retry after first interaction */ }
+  try {
+    // Resume is particularly useful when the controller was constructed
+    // before the browser granted media permission on the first interaction.
+    if (fromGesture && spotifyController.resume) spotifyController.resume();
+    spotifyController.play();
+  } catch(e) { /* keep retrying after future visitor interactions */ }
 }
 
 function armSoundtrackGestureFallback(){
   if (soundtrackGestureArmed) return;
   soundtrackGestureArmed = true;
-  const retry = () => attemptSoundtrackPlayback();
-  // A user gesture satisfies browsers that block unmuted autoplay.
-  window.addEventListener('pointerdown', retry, { once: true, capture: true });
-  window.addEventListener('keydown', retry, { once: true, capture: true });
+  const retry = () => {
+    visitorInteracted = true;
+    attemptSoundtrackPlayback(true);
+  };
+  // Keep the listener alive until playback begins: an early gesture may occur
+  // before Spotify finishes initializing, while a later click should still start it.
+  ['pointerdown', 'keydown', 'touchstart'].forEach((eventName) => {
+    window.addEventListener(eventName, retry, { capture: true, passive: eventName === 'touchstart' });
+  });
 }
 
 async function renderMusicPlayer(){
@@ -1301,13 +1314,16 @@ async function renderMusicPlayer(){
       spotifyController = controller;
       // Attempt on controller creation as well as the ready event because the
       // event can precede listener registration in some browser timings.
-      attemptSoundtrackPlayback();
+      attemptSoundtrackPlayback(visitorInteracted);
       armSoundtrackGestureFallback();
       controller.addListener('ready', () => {
-        attemptSoundtrackPlayback();
+        attemptSoundtrackPlayback(visitorInteracted);
         armSoundtrackGestureFallback();
       });
       controller.addListener('playback_started', () => { soundtrackStarted = true; });
+      controller.addListener('playback_update', (event) => {
+        soundtrackStarted = !event.data.isPaused && !event.data.isBuffering;
+      });
     });
   } catch(e) {
     // The background experience remains usable if Spotify is unavailable.
