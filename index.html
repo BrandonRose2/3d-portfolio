@@ -727,6 +727,67 @@ function makeTrainingHubTexture(p){
   return texture;
 }
 
+function makeCompanyContactsTexture(p){
+  const w = 960, h = 640, chromeH = 56;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const ink = '#111111', paper = '#f7f7f5', muted = '#737373', accent = '#111111';
+  roundRectPath(ctx, 0, 0, w, h, 26); ctx.fillStyle = paper; ctx.fill();
+  ctx.save(); roundRectPath(ctx, 0, 0, w, h, 26); ctx.clip();
+  ctx.fillStyle = ink; ctx.fillRect(0, 0, w, chromeH);
+  [['#ff5f56',22], ['#ffbd2e',44], ['#27c93f',66]].forEach(([c, cx]) => { ctx.beginPath(); ctx.arc(cx, 28, 6, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); });
+  ctx.fillStyle = 'rgba(255,255,255,.14)'; roundRectPath(ctx, 105, 15, 610, 26, 13); ctx.fill();
+  ctx.fillStyle = '#e6e6e6'; ctx.font = '14px Segoe UI, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('sky-tendency-179.notion.site/company-contacts', 122, 33);
+  ctx.fillStyle = '#fff'; ctx.font = '700 13px Segoe UI, sans-serif'; ctx.textAlign = 'right'; ctx.fillText('NOTION WORKSPACE', w - 32, 33);
+  ctx.fillStyle = '#efefec'; ctx.fillRect(0, chromeH, 230, h - chromeH);
+  ctx.fillStyle = '#202020'; ctx.font = '700 16px Segoe UI, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ApartmentCorp', 34, 106);
+  ctx.fillStyle = muted; ctx.font = '14px Segoe UI, sans-serif';
+  ['Workspace', 'Operations', 'Company Contacts', 'Reference'].forEach((label, i) => { ctx.fillText(label, 42, 154 + i * 44); });
+  ctx.fillStyle = '#ececec'; roundRectPath(ctx, 18, 170, 194, 34, 7); ctx.fill();
+  ctx.fillStyle = '#252525'; ctx.font = '600 14px Segoe UI, sans-serif'; ctx.fillText('Company Contacts', 42, 192);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(230, chromeH, w - 230, h - chromeH);
+  ctx.fillStyle = '#202020'; ctx.font = '700 34px Segoe UI, sans-serif'; ctx.fillText('Company Contacts', 278, 126);
+  ctx.fillStyle = muted; ctx.font = '16px Segoe UI, sans-serif'; ctx.fillText('Shared workspace directory', 280, 156);
+  const rows = ['Leadership & Corporate', 'Regional Operations', 'Property Teams', 'Vendor & Partner Directory'];
+  rows.forEach((label, i) => {
+    const y = 206 + i * 72;
+    ctx.fillStyle = '#fafafa'; roundRectPath(ctx, 278, y, 618, 56, 10); ctx.fill();
+    ctx.strokeStyle = '#e6e6e6'; ctx.lineWidth = 1; roundRectPath(ctx, 278, y, 618, 56, 10); ctx.stroke();
+    ctx.fillStyle = '#111'; ctx.font = '600 16px Segoe UI, sans-serif'; ctx.fillText(label, 304, y + 34);
+    ctx.fillStyle = '#8c8c8c'; ctx.font = '14px Segoe UI, sans-serif'; ctx.textAlign = 'right'; ctx.fillText('Open directory →', 864, y + 34); ctx.textAlign = 'left';
+  });
+  const fade = ctx.createLinearGradient(0, 520, 0, h); fade.addColorStop(0, 'rgba(255,255,255,0)'); fade.addColorStop(1, 'rgba(17,17,17,.94)'); ctx.fillStyle = fade; ctx.fillRect(0, 520, w, h - 520);
+  ctx.fillStyle = '#fff'; ctx.font = '600 30px Segoe UI, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(p.title, w / 2, h - 40);
+  ctx.restore(); ctx.strokeStyle = accent; ctx.lineWidth = 4; roundRectPath(ctx, 2, 2, w - 4, h - 4, 24); ctx.stroke();
+  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; return texture;
+}
+
+function makeFeedbackTrainingTexture(p){
+  const w = 960, h = 640, chromeH = 56;
+  const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d'); const gold = '#f59e0b', navy = '#0b1220', lavender = '#c4b5fd';
+  roundRectPath(ctx, 0, 0, w, h, 26); const bg = ctx.createLinearGradient(0, 0, w, h); bg.addColorStop(0, '#18233a'); bg.addColorStop(1, navy); ctx.fillStyle = bg; ctx.fill();
+  ctx.save(); roundRectPath(ctx, 0, 0, w, h, 26); ctx.clip();
+  ctx.fillStyle = '#070b14'; ctx.fillRect(0, 0, w, chromeH);
+  [['#ff5f56',22], ['#ffbd2e',44], ['#27c93f',66]].forEach(([c, cx]) => { ctx.beginPath(); ctx.arc(cx, 28, 6, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); });
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; roundRectPath(ctx, 105, 15, 610, 26, 13); ctx.fill();
+  ctx.fillStyle = '#b8c1d6'; ctx.font = '14px Segoe UI, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('property-manager-feedback-training.app', 122, 33);
+  ctx.fillStyle = gold; ctx.font = '700 12px Segoe UI, sans-serif'; ctx.textAlign = 'right'; ctx.fillText('INTERNAL WORKFLOW', w - 32, 33);
+  ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = '600 34px Segoe UI, sans-serif'; ctx.fillText('Manager Feedback', 54, 128); ctx.fillText('& Training Requests', 54, 168);
+  ctx.fillStyle = '#a9b5cb'; ctx.font = '16px Segoe UI, sans-serif'; ctx.fillText('Capture needs, route requests, and improve field operations.', 56, 204);
+  const field = (y, label, value) => { ctx.fillStyle = 'rgba(255,255,255,.07)'; roundRectPath(ctx, 54, y, 508, 58, 10); ctx.fill(); ctx.fillStyle = '#9aa7bf'; ctx.font = '600 13px Segoe UI, sans-serif'; ctx.fillText(label, 76, y + 23); ctx.fillStyle = '#f4f7fb'; ctx.font = '15px Segoe UI, sans-serif'; ctx.fillText(value, 76, y + 45); };
+  field(254, 'REQUEST TYPE', 'Training support'); field(326, 'TEAM / PROPERTY', 'Select operational area'); field(398, 'DETAILS', 'Describe the support needed');
+  ctx.fillStyle = gold; roundRectPath(ctx, 54, 486, 214, 48, 12); ctx.fill(); ctx.fillStyle = '#1b1304'; ctx.font = '700 15px Segoe UI, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('SUBMIT REQUEST', 161, 516);
+  ctx.fillStyle = 'rgba(196,181,253,.13)'; roundRectPath(ctx, 616, 232, 288, 248, 16); ctx.fill();
+  ctx.fillStyle = lavender; ctx.font = '600 17px Segoe UI, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('REQUEST LIFECYCLE', 646, 272);
+  ['Submit a need', 'Route to the team', 'Schedule support', 'Close the loop'].forEach((label, i) => { const y = 316 + i * 38; ctx.fillStyle = gold; ctx.beginPath(); ctx.arc(652, y - 5, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#eef2ff'; ctx.font = '15px Segoe UI, sans-serif'; ctx.fillText(label, 674, y); });
+  const fade = ctx.createLinearGradient(0, 520, 0, h); fade.addColorStop(0, 'rgba(5,10,16,0)'); fade.addColorStop(1, 'rgba(5,10,16,.94)'); ctx.fillStyle = fade; ctx.fillRect(0, 520, w, h - 520);
+  ctx.fillStyle = gold; ctx.font = '600 14px Segoe UI, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('LIVE APP PREVIEW', w / 2, h - 77); ctx.fillStyle = '#fff'; ctx.font = '600 29px Segoe UI, sans-serif'; ctx.fillText(p.title, w / 2, h - 40);
+  ctx.restore(); ctx.strokeStyle = gold; ctx.lineWidth = 4; roundRectPath(ctx, 2, 2, w - 4, h - 4, 24); ctx.stroke();
+  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; return texture;
+}
+
 function makeVacancyDashboardTexture(p){
   const w = 960, h = 640, chromeH = 56;
   const canvas = document.createElement('canvas');
@@ -910,6 +971,18 @@ function applyPreviewTexture(card, p){
   }
   if (p.previewStyle === 'training-hub') {
     card.material.map = makeTrainingHubTexture(p);
+    card.material.needsUpdate = true;
+    return;
+  }
+  if (p.previewStyle === 'feedback-training') {
+    card.material.map = makeFeedbackTrainingTexture(p);
+    card.material.needsUpdate = true;
+    return;
+  }
+  // Notion often returns a generic or blocked capture; retain the intentional
+  // workspace card so Company Contacts is always clear and visible.
+  if (p.slug === 'company-contacts') {
+    card.material.map = makeCompanyContactsTexture(p);
     card.material.needsUpdate = true;
     return;
   }
@@ -1495,7 +1568,8 @@ function loadSpotifyIframeApi(){
 }
 
 function attemptSoundtrackPlayback(fromGesture = false){
-  if (!spotifyController || soundtrackStarted) return;
+  // Edit Mode is intentionally silent: music belongs to the public homepage.
+  if (editMode || !spotifyController || soundtrackStarted) return;
   try {
     // Resume is particularly useful when the controller was constructed
     // before the browser granted media permission on the first interaction.
@@ -1508,6 +1582,7 @@ function armSoundtrackGestureFallback(){
   if (soundtrackGestureArmed) return;
   soundtrackGestureArmed = true;
   const retry = () => {
+    if (editMode) return;
     visitorInteracted = true;
     attemptSoundtrackPlayback(true);
   };
@@ -1519,10 +1594,16 @@ function armSoundtrackGestureFallback(){
 }
 
 async function renderMusicPlayer(){
-  // Visitors always receive the published soundtrack. A browser-local draft is
-  // deliberately applied only while the owner has Edit Mode open.
-  const activeConfig = editMode ? SITE_CONFIG : PUBLISHED_SITE_CONFIG;
-  const parsed = parseSpotifyLink(activeConfig.spotifyUrl);
+  // The soundtrack belongs exclusively to public homepage mode. Edit Mode is
+  // deliberately silent and only exposes the owner configuration controls.
+  if (editMode){
+    soundtrackStarted = false;
+    if (spotifyController?.destroy) spotifyController.destroy();
+    spotifyController = null;
+    playerContainer.replaceChildren();
+    return;
+  }
+  const parsed = parseSpotifyLink(PUBLISHED_SITE_CONFIG.spotifyUrl);
   soundtrackStarted = false;
   if (spotifyController?.destroy) spotifyController.destroy();
   spotifyController = null;

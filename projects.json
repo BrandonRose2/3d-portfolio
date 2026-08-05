@@ -312,8 +312,9 @@
     "features": [],
     "howToUse": "Property Managers/assistants submit their requests for training and additional information they need.",
     "url": "file:///Users/brandonrose/Downloads/PM_Feedback_Form_App.html",
-    "image": "file:///Users/brandonrose/Downloads/PM_Feedback_Form_App.html",
-    "previewMode": "image"
+    "image": null,
+    "previewMode": "fallback",
+    "previewStyle": "feedback-training"
   },
   {
     "slug": "propertymax-ai-training-hub",
