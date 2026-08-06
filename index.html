@@ -94,6 +94,16 @@
   body.edit-mode #music-player-container{left:28px;top:auto;bottom:28px;width:300px;height:80px;z-index:15;
     opacity:1;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);}
   #music-player-container iframe{display:block;border:0;}
+  #rose-sound-trigger{position:fixed;left:37%;top:24%;z-index:14;width:82px;height:82px;border:0;border-radius:50%;
+    color:#fff7e8;background:radial-gradient(circle,rgba(255,229,183,.34) 0 17%,rgba(255,172,91,.13) 18% 42%,rgba(255,172,91,0) 70%);
+    box-shadow:0 0 0 1px rgba(255,226,181,.22),0 0 28px rgba(255,166,82,.48);cursor:pointer;opacity:0;pointer-events:none;
+    transform:translate(-50%,-50%) scale(.8);transition:opacity .45s ease,transform .45s ease,box-shadow .45s ease;animation:roseSoundPulse 2.4s ease-in-out infinite;}
+  #rose-sound-trigger::before{content:'♫';font:700 27px/82px Georgia,serif;text-shadow:0 1px 12px rgba(255,191,113,.95);}
+  #rose-sound-trigger:hover{transform:translate(-50%,-50%) scale(1.08);box-shadow:0 0 0 1px rgba(255,243,218,.7),0 0 42px rgba(255,166,82,.8);}
+  body.rose-sound-needs-gesture #rose-sound-trigger{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+  body.edit-mode #rose-sound-trigger{display:none;}
+  @keyframes roseSoundPulse{0%,100%{filter:brightness(1);box-shadow:0 0 0 1px rgba(255,226,181,.22),0 0 28px rgba(255,166,82,.48)}50%{filter:brightness(1.25);box-shadow:0 0 0 5px rgba(255,226,181,.08),0 0 52px rgba(255,166,82,.72)}}
+  @media(max-width:760px){#rose-sound-trigger{left:50%;top:23%;width:66px;height:66px}#rose-sound-trigger::before{font-size:23px;line-height:66px;}}
 
   #filters{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto;}
   .pill{padding:8px 18px;border-radius:999px;font-size:13px;font-weight:500;
@@ -219,6 +229,7 @@
 
   <div id="tooltip"></div>
   <div id="music-player-container" style="opacity: 0;"></div>
+  <button id="rose-sound-trigger" type="button" aria-label="Start the background soundtrack" title="Start soundtrack"></button>
 
   <button id="addProjectBtn">+ Add Project</button>
 
@@ -1539,6 +1550,7 @@ const saveSpotifyBtn = document.getElementById('save-spotify');
 const exportMusicBtn = document.getElementById('export-music-settings');
 const musicStatus = document.getElementById('music-status');
 const playerContainer = document.getElementById('music-player-container');
+const roseSoundTrigger = document.getElementById('rose-sound-trigger');
 
 function parseSpotifyLink(link){
   const match = (link || '').trim().match(/spotify\.com\/(track|playlist|album|artist|show|episode)\/([a-zA-Z0-9]+)/);
@@ -1550,6 +1562,31 @@ let spotifyApiPromise = null;
 let soundtrackStarted = false;
 let soundtrackGestureArmed = false;
 let visitorInteracted = false;
+let soundtrackNeedsGesture = false;
+let soundtrackGestureTimer = null;
+function updateRoseSoundTrigger(){
+  const show = !editMode && soundtrackNeedsGesture && !soundtrackStarted && !!spotifyController;
+  document.body.classList.toggle('rose-sound-needs-gesture', show);
+  roseSoundTrigger.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
+function scheduleRoseSoundTrigger(){
+  if (soundtrackGestureTimer) clearTimeout(soundtrackGestureTimer);
+  soundtrackGestureTimer = setTimeout(() => {
+    if (!soundtrackStarted && !editMode) {
+      soundtrackNeedsGesture = true;
+      updateRoseSoundTrigger();
+    }
+  }, 1800);
+}
+function activateSoundtrackFromRose(){
+  if (editMode) return;
+  visitorInteracted = true;
+  soundtrackNeedsGesture = false;
+  updateRoseSoundTrigger();
+  attemptSoundtrackPlayback(true);
+  scheduleRoseSoundTrigger();
+}
+roseSoundTrigger.addEventListener('click', activateSoundtrackFromRose);
 
 function loadSpotifyIframeApi(){
   if (spotifyApiPromise) return spotifyApiPromise;
@@ -1579,18 +1616,9 @@ function attemptSoundtrackPlayback(fromGesture = false){
 }
 
 function armSoundtrackGestureFallback(){
-  if (soundtrackGestureArmed) return;
+  // Spotify requires a permitted interaction in many browsers. The rose itself
+  // is that intentional, accessible interaction—no generic page-click hijack.
   soundtrackGestureArmed = true;
-  const retry = () => {
-    if (editMode) return;
-    visitorInteracted = true;
-    attemptSoundtrackPlayback(true);
-  };
-  // Keep the listener alive until playback begins: an early gesture may occur
-  // before Spotify finishes initializing, while a later click should still start it.
-  ['pointerdown', 'keydown', 'touchstart'].forEach((eventName) => {
-    window.addEventListener(eventName, retry, { capture: true, passive: eventName === 'touchstart' });
-  });
 }
 
 async function renderMusicPlayer(){
@@ -1598,6 +1626,8 @@ async function renderMusicPlayer(){
   // deliberately silent and only exposes the owner configuration controls.
   if (editMode){
     soundtrackStarted = false;
+    soundtrackNeedsGesture = false;
+    updateRoseSoundTrigger();
     if (spotifyController?.destroy) spotifyController.destroy();
     spotifyController = null;
     playerContainer.replaceChildren();
@@ -1605,6 +1635,8 @@ async function renderMusicPlayer(){
   }
   const parsed = parseSpotifyLink(PUBLISHED_SITE_CONFIG.spotifyUrl);
   soundtrackStarted = false;
+  soundtrackNeedsGesture = false;
+  updateRoseSoundTrigger();
   if (spotifyController?.destroy) spotifyController.destroy();
   spotifyController = null;
   playerContainer.replaceChildren();
@@ -1627,6 +1659,8 @@ async function renderMusicPlayer(){
       height: 80,
     }, (controller) => {
       spotifyController = controller;
+      const spotifyIframe = mount.querySelector('iframe');
+      if (spotifyIframe) spotifyIframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture');
       // Attempt on controller creation as well as the ready event because the
       // event can precede listener registration in some browser timings.
       attemptSoundtrackPlayback(visitorInteracted);
@@ -1634,10 +1668,19 @@ async function renderMusicPlayer(){
       controller.addListener('ready', () => {
         attemptSoundtrackPlayback(visitorInteracted);
         armSoundtrackGestureFallback();
+        scheduleRoseSoundTrigger();
       });
-      controller.addListener('playback_started', () => { soundtrackStarted = true; });
+      controller.addListener('playback_started', () => {
+        soundtrackStarted = true;
+        soundtrackNeedsGesture = false;
+        updateRoseSoundTrigger();
+      });
       controller.addListener('playback_update', (event) => {
         soundtrackStarted = !event.data.isPaused && !event.data.isBuffering;
+        if (soundtrackStarted) {
+          soundtrackNeedsGesture = false;
+          updateRoseSoundTrigger();
+        }
       });
     });
   } catch(e) {
