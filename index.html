@@ -120,37 +120,6 @@
     white-space:nowrap;}
   #tooltip.show{opacity:1;}
 
-  /* The living observer occupies the intentionally open upper-right stage area.
-     It sits beneath HUD controls and never intercepts carousel interaction. */
-  #stage-eye{--pupil-x:0px;--pupil-y:0px;--glint-x:0px;--glint-y:0px;--frame-x:0px;--frame-y:0px;--reflection-x:0px;--reflection-y:0px;--eye-tilt:0deg;position:fixed;top:5%;right:7%;z-index:0;
-    width:min(25vw,400px);aspect-ratio:1;pointer-events:none;isolation:isolate;filter:drop-shadow(0 18px 32px rgba(0,0,0,.5));animation:stageEyeFloat 4.7s cubic-bezier(.45,0,.55,1) infinite;}
-  #stage-eye::before{content:'';position:absolute;inset:12%;z-index:0;border-radius:50%;background:radial-gradient(circle,rgba(209,168,74,.16) 0 22%,rgba(163,204,238,.08) 38%,rgba(0,0,0,0) 70%);filter:blur(13px);mix-blend-mode:screen;animation:stageEyeAura 2.7s ease-in-out infinite;}
-  #stage-eye .eye-art{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:contain;transform:rotate(var(--eye-tilt));
-    filter:contrast(1.08) saturate(.92) brightness(.94);transform:translate3d(var(--frame-x),var(--frame-y),0) rotate(var(--eye-tilt));transition:transform 450ms cubic-bezier(.23,1,.32,1);}
-  #stage-eye-reflection{position:absolute;inset:28% 22% 29% 22%;z-index:2;width:56%;height:43%;
-    mix-blend-mode:screen;opacity:.88;filter:blur(.35px) saturate(1.25);clip-path:ellipse(50% 46% at 50% 50%);transform:translate3d(var(--reflection-x),var(--reflection-y),0) scaleX(-1) rotate(2deg);transition:transform 160ms cubic-bezier(.23,1,.32,1);}
-  #stage-eye .eye-pupil{position:absolute;left:50%;top:51%;z-index:3;width:15%;aspect-ratio:1;border-radius:50%;
-    transform:translate(calc(-50% + var(--pupil-x)),calc(-50% + var(--pupil-y)));transition:transform 85ms linear;
-    background:radial-gradient(circle at 36% 32%,rgba(233,250,255,.92) 0 6%,rgba(16,23,31,.96) 8% 30%,#030508 54%,rgba(0,0,0,1) 100%);
-    box-shadow:0 0 0 2px rgba(5,7,10,.92),0 0 14px rgba(8,15,21,.9),0 0 24px rgba(246,188,82,.22);}
-  #stage-eye .eye-glint{position:absolute;left:48%;top:43%;z-index:4;width:8%;height:4%;border-radius:50%;
-    background:radial-gradient(ellipse,rgba(255,255,255,.88),rgba(255,255,255,0) 72%);opacity:.8;transform:translate3d(var(--glint-x),var(--glint-y),0) rotate(-19deg);transition:transform 170ms cubic-bezier(.23,1,.32,1);}
-  #stage-eye .eye-vignette{position:absolute;inset:25% 20% 26% 20%;z-index:5;border-radius:50%;
-    box-shadow:inset 0 0 18px 8px rgba(0,0,0,.57);mix-blend-mode:multiply;}
-  #stage-eye .eye-shimmer{position:absolute;inset:26% 20% 27% 20%;z-index:6;border-radius:50%;clip-path:ellipse(50% 47% at 50% 50%);overflow:hidden;mix-blend-mode:screen;pointer-events:none;}
-  #stage-eye .eye-shimmer::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 20%,rgba(190,226,255,0) 39%,rgba(255,249,214,.38) 49%,rgba(180,225,255,.19) 54%,transparent 66%);background-size:230% 100%;animation:stageEyeShimmer 3.2s ease-in-out infinite;}
-  #stage-eye .eye-breath{position:absolute;inset:16%;z-index:7;border-radius:50%;border:1px solid rgba(240,187,89,.08);
-    box-shadow:0 0 0 1px rgba(227,245,255,.035),0 0 30px rgba(238,175,70,.08);animation:eyeBreath 5.2s ease-in-out infinite;}
-  #stage-eye .eye-lid{position:absolute;inset:29% 21% 30% 21%;z-index:8;overflow:hidden;clip-path:ellipse(50% 47% at 50% 50%);}
-  #stage-eye .eye-lid::before{content:'';position:absolute;inset:-18% -4%;border-radius:50%;background:linear-gradient(180deg,rgba(25,22,21,.98),rgba(99,83,68,.95) 50%,rgba(213,188,143,.58) 84%,rgba(0,0,0,0));transform:translateY(-116%);}
-  #stage-eye.is-blinking .eye-lid::before{animation:stageEyeBlink 230ms cubic-bezier(.25,.9,.35,1) both;}
-  @keyframes eyeBreath{0%,100%{opacity:.5;transform:scale(.985)}50%{opacity:1;transform:scale(1.012)}}
-  @keyframes stageEyeFloat{0%,100%{filter:drop-shadow(0 18px 32px rgba(0,0,0,.5));transform:translate3d(0,0,0) rotate(-.5deg) scale(1)}50%{filter:drop-shadow(0 26px 44px rgba(18,15,7,.7));transform:translate3d(5px,-13px,0) rotate(.9deg) scale(1.035)}}
-  @keyframes stageEyeAura{0%,100%{opacity:.38;transform:scale(.92)}50%{opacity:1;transform:scale(1.16)}}
-  @keyframes stageEyeShimmer{0%,18%{background-position:135% 0}52%,100%{background-position:-130% 0}}
-  @keyframes stageEyeBlink{0%,100%{transform:translateY(-116%)}46%,56%{transform:translateY(0)}}
-  @media (prefers-reduced-motion:reduce){#stage-eye,#stage-eye .eye-breath{animation:none!important}#stage-eye .eye-art,#stage-eye-reflection,#stage-eye .eye-glint,#stage-eye .eye-pupil{transition:none!important}}
-
   #editToggle{margin-left:auto;pointer-events:auto;}
   #editToggle.active{background:#fff;color:#0a0a12;border-color:#fff;}
 
@@ -220,7 +189,6 @@
     .pill{padding:5px 10px;font-size:11px;}
     .side-panel{width:100%;max-width:100%;}
     #addProjectBtn{right:16px;bottom:16px;}
-    #stage-eye{top:20%;right:-5%;width:min(54vw,280px);opacity:.82;}
   }
 </style>
 <script type="importmap">
@@ -236,11 +204,6 @@
 
   <div id="bg-art" aria-hidden="true"></div>
   <div id="scene-container"></div>
-  <div id="stage-eye" aria-hidden="true">
-    <img class="eye-art" src="./assets/gilded-celestial-eye-transparent.webp" alt="" />
-    <canvas id="stage-eye-reflection" width="320" height="180"></canvas>
-    <span class="eye-pupil"></span><span class="eye-glint"></span><span class="eye-vignette"></span><span class="eye-shimmer"></span><span class="eye-breath"></span><span class="eye-lid"></span>
-  </div>
 
   <div id="hud">
     <div class="title-block" style="display:flex;align-items:flex-start;">
@@ -1164,13 +1127,6 @@ function focusSavedPreview(slug){
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const tooltip = document.getElementById('tooltip');
-const stageEye = document.getElementById('stage-eye');
-const stageEyeReflection = document.getElementById('stage-eye-reflection');
-const stageEyeReflectionCtx = stageEyeReflection.getContext('2d');
-const stageEyeProjection = new THREE.Vector3();
-const reducedEyeMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-let stageEyeBlinkTimer = null;
-let stageEyeLastInput = performance.now();
 const panel = document.getElementById('detail-panel');
 let hovered = null;
 let activeCategory = 'all';
@@ -1196,88 +1152,6 @@ function onPointerMove(e){
     tooltip.style.top = e.clientY + 'px';
     tooltip.textContent = hovered.userData.project.subtitle;
   }
-  updateStageEyeGaze(e.clientX, e.clientY);
-}
-
-function updateStageEyeGaze(clientX, clientY){
-  const rect = stageEye.getBoundingClientRect();
-  const dx = clientX - (rect.left + rect.width / 2);
-  const dy = clientY - (rect.top + rect.height / 2);
-  const distance = Math.max(1, Math.hypot(dx, dy));
-  const movement = Math.min(rect.width * .04, 18);
-  const pupilX = dx / distance * movement;
-  const pupilY = dy / distance * movement;
-  stageEye.style.setProperty('--pupil-x', `${pupilX.toFixed(2)}px`);
-  stageEye.style.setProperty('--pupil-y', `${pupilY.toFixed(2)}px`);
-  stageEye.style.setProperty('--glint-x', `${(-pupilX * .16).toFixed(2)}px`);
-  stageEye.style.setProperty('--glint-y', `${(-pupilY * .16).toFixed(2)}px`);
-  stageEye.style.setProperty('--reflection-x', `${(pupilX * .28).toFixed(2)}px`);
-  stageEye.style.setProperty('--reflection-y', `${(pupilY * .28).toFixed(2)}px`);
-  stageEye.style.setProperty('--frame-x', `${(-pupilX * .12).toFixed(2)}px`);
-  stageEye.style.setProperty('--frame-y', `${(-pupilY * .12).toFixed(2)}px`);
-  stageEyeLastInput = performance.now();
-}
-
-function scheduleStageEyeBlink(){
-  if (reducedEyeMotion) return;
-  const delay = 1400 + Math.random() * 2600;
-  stageEyeBlinkTimer = window.setTimeout(() => {
-    stageEye.classList.add('is-blinking');
-    window.setTimeout(() => stageEye.classList.remove('is-blinking'), 250);
-    scheduleStageEyeBlink();
-  }, delay);
-}
-
-function performStageEyeSaccade(now){
-  if (reducedEyeMotion || now - stageEyeLastInput < 1050) return;
-  const rect = stageEye.getBoundingClientRect();
-  const targetX = rect.left + rect.width * (.27 + Math.random() * .46);
-  const targetY = rect.top + rect.height * (.36 + Math.random() * .28);
-  updateStageEyeGaze(targetX, targetY);
-}
-
-scheduleStageEyeBlink();
-
-function renderStageEyeReflection(){
-  if (!stageEyeReflectionCtx || !nodes.length) return;
-  const ctx = stageEyeReflectionCtx;
-  const w = stageEyeReflection.width, h = stageEyeReflection.height;
-  ctx.clearRect(0, 0, w, h);
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  nodes.slice(0, 12).forEach((node, index) => {
-    node.card.getWorldPosition(stageEyeProjection);
-    stageEyeProjection.project(camera);
-    const x = (stageEyeProjection.x * .5 + .5) * w;
-    const y = (-stageEyeProjection.y * .5 + .5) * h;
-    const size = Math.max(10, Math.min(38, 18 + node.card.scale.x * 7));
-    const color = CATEGORIES[node.project.category]?.color ?? 0xcbd5e1;
-    const hex = `#${color.toString(16).padStart(6, '0')}`;
-    ctx.globalAlpha = Math.max(.08, .34 - index * .014);
-    const preview = node.card.material.map?.image;
-    if (preview && preview.width && preview.height) {
-      ctx.drawImage(preview, x - size * .8, y - size * .42, size * 1.6, size * .84);
-      ctx.strokeStyle = hex;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x - size * .8, y - size * .42, size * 1.6, size * .84);
-    } else {
-      ctx.strokeStyle = hex;
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(x - size * .72, y - size * .32, size * 1.44, size * .64);
-      ctx.fillStyle = hex;
-      ctx.globalAlpha *= .28;
-      ctx.fillRect(x - size * .72, y - size * .32, size * 1.44, size * .64);
-    }
-  });
-  const sheen = ctx.createLinearGradient(0, 0, w, h);
-  sheen.addColorStop(0, 'rgba(244,211,130,.16)');
-  sheen.addColorStop(.45, 'rgba(180,225,255,.05)');
-  sheen.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.globalAlpha = .75;
-  ctx.fillStyle = sheen;
-  ctx.fillRect(0, 0, w, h);
-  ctx.restore();
-  stageEye.style.setProperty('--eye-tilt', `${(Math.sin(carouselGroup.rotation.y * 1.7) * .65).toFixed(2)}deg`);
 }
 
 function cardAtPointerEvent(e){
@@ -1664,8 +1538,6 @@ const clock = new THREE.Clock();
 
     updateRoseLamp();
     controls.update();
-    renderStageEyeReflection();
-    performStageEyeSaccade(performance.now());
     renderer.render(scene, camera);
   }
 
@@ -1863,5 +1735,113 @@ exportMusicBtn.addEventListener('click', () => {
 
 })();
 </script>
+
+<!-- ============================================================
+     NOCTURNE LASH — the rose watching-eye overlay.
+     Generated asset (Higgsfield / Seedance 2.5). Currently points at a
+     temporary generation-CDN link — swap ROSE_EYE_SRC below for a permanent
+     local asset (e.g. ./assets/rose-eye.mp4) once downloaded into this
+     repo. Self-contained: safe to delete this whole block (down to the
+     matching END comment) to remove it.
+     ============================================================ -->
+<div id="nocturne-rose-eye" class="nocturne-watcher nocturne-watcher--circle" aria-hidden="true">
+  <video class="nw-video" autoplay muted loop playsinline preload="auto"></video>
+</div>
+
+<style>
+  .nocturne-watcher {
+    position: fixed;
+    top: 128px;
+    width: 380px;
+    height: 278px;
+    z-index: 9;                 /* below side-panel (20) and toolbars, above the 3D scene (1) */
+    pointer-events: none;
+    transition: transform 0.25s cubic-bezier(.2,.8,.2,1);
+    will-change: transform;
+  }
+  #nocturne-rose-eye { right: 64px; }
+
+  .nocturne-watcher .nw-video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: drop-shadow(0 8px 30px rgba(0,0,0,0.65)) saturate(1.05);
+  }
+  /* Rose: tight circular vignette works because the source is roughly round. */
+  .nocturne-watcher--circle .nw-video {
+    border-radius: 50%;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 92%);
+    mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 92%);
+  }
+
+  @media (max-width: 900px) {
+    #nocturne-rose-eye { top: auto; bottom: 18px; right: 16px; width: 190px; height: 139px; }
+  }
+  @media (max-width: 560px) {
+    .nocturne-watcher { display: none; }
+  }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  // Temporary generation-CDN URL — see note above the markup for swapping to
+  // a permanent local asset.
+  var WATCHERS = [
+    {
+      id: "nocturne-rose-eye",
+      src: "https://d8j0ntlcm91z4.cloudfront.net/user_3EY3QMqTUmKxpm6056KEXVKEoJg/hf_20260809_005406_1b580415-a777-4652-957f-b80bc5b27aba.mp4"
+    }
+  ];
+
+  var MAX_TILT_DEG = 6, MAX_SHIFT_PX = 10;
+
+  WATCHERS.forEach(function (w) {
+    var root = document.getElementById(w.id);
+    if (!root) return;
+    var video = root.querySelector(".nw-video");
+    video.src = w.src;
+    video.play().catch(function () { /* autoplay may need a user gesture on some browsers */ });
+
+    var target = { rx: 0, ry: 0, x: 0, y: 0 };
+    var current = { rx: 0, ry: 0, x: 0, y: 0 };
+    var rect = null;
+
+    function measure() { rect = root.getBoundingClientRect(); }
+
+    function onMouseMove(e) {
+      if (!rect) measure();
+      var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      var dx = (e.clientX - cx) / (window.innerWidth / 2);
+      var dy = (e.clientY - cy) / (window.innerHeight / 2);
+      dx = Math.max(-1, Math.min(1, dx));
+      dy = Math.max(-1, Math.min(1, dy));
+      target.ry = dx * MAX_TILT_DEG;
+      target.rx = -dy * MAX_TILT_DEG;
+      target.x = dx * MAX_SHIFT_PX;
+      target.y = dy * MAX_SHIFT_PX * 0.5;
+    }
+
+    function tick() {
+      current.rx += (target.rx - current.rx) * 0.08;
+      current.ry += (target.ry - current.ry) * 0.08;
+      current.x += (target.x - current.x) * 0.08;
+      current.y += (target.y - current.y) * 0.08;
+      root.style.transform =
+        "translate(" + current.x.toFixed(2) + "px," + current.y.toFixed(2) + "px) " +
+        "perspective(600px) rotateX(" + current.rx.toFixed(2) + "deg) rotateY(" + current.ry.toFixed(2) + "deg)";
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("resize", measure, { passive: true });
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    measure();
+    requestAnimationFrame(tick);
+  });
+})();
+</script>
+<!-- ============================================================ END NOCTURNE LASH ============================================================ -->
+
 </body>
 </html>
