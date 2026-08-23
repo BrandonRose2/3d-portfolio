@@ -95,14 +95,14 @@
     "category": "marketing",
     "tier": 2,
     "desc": "Standalone PropertyMax tool for creating, printing, and downloading referral flyers.",
-    "builtWith": "Built with Manus AI \u2014 generated from a prompt and deployed on Manus's hosting.",
+    "builtWith": "Built with Manus AI \u2014 generated from a prompt, now self-hosted on GitHub Pages from the propertymax-flyer-studio repository.",
     "features": [
       "Create property referral flyers from a simple form",
       "Print-ready and downloadable output",
-      "Standalone PropertyMax branding"
+      "Static, fast-loading GitHub Pages deployment"
     ],
     "howToUse": "Fill in the property details in the form, preview the flyer, then print or download it.",
-    "url": "https://property-flyer-generator.manus.space/",
+    "url": "https://brandonrose2.github.io/propertymax-flyer-studio/",
     "image": null
   },
   {
