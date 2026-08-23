@@ -220,8 +220,9 @@
       "Central reference for property details"
     ],
     "howToUse": "Not publicly deployed \u2014 used internally as a property reference directory.",
-    "url": null,
-    "image": null
+    "url": "https://aptorgchart-8jqkkzne.manus.space/",
+    "image": null,
+    "previewMode": "url"
   },
   {
     "slug": "batch-file-editor",
@@ -253,7 +254,7 @@
       "Tracks onboarding completion"
     ],
     "howToUse": "Not publicly deployed \u2014 used internally to onboard new hires.",
-    "url": "https://new-hire-onboarding-aptcorp.my.canva.site//?code=mnMSeXDKfEbJmwToDDf6mm",
+    "url": "https://new-hire-onboarding-aptcorp.my.canva.site/",
     "image": "https://new-hire-onboarding-aptcorp.my.canva.site/",
     "previewMode": "url"
   },
@@ -285,7 +286,7 @@
     "features": [],
     "howToUse": "",
     "url": "https://new-hire-onboarding.manus.space/admin",
-    "image": "https://new-hire-onboarding.manus.space/?code=mnMSeXDKfEbJmwToDDf6mm"
+    "image": "https://new-hire-onboarding.manus.space/admin"
   },
   {
     "slug": "new-hire-onboarding-how-it-works-powerpoint",
@@ -311,10 +312,38 @@
     "builtWith": "",
     "features": [],
     "howToUse": "Property Managers/assistants submit their requests for training and additional information they need.",
-    "url": "file:///Users/brandonrose/Downloads/PM_Feedback_Form_App.html",
+    "url": null,
     "image": null,
-    "previewMode": "fallback",
+    "previewMode": null,
     "previewStyle": "feedback-training"
+  },
+  {
+    "slug": "ai-learning-portal",
+    "title": "Ai Learning Portal",
+    "subtitle": "Ai Portal for Victoria to learn about Artificial Intelligence",
+    "category": "platform",
+    "tier": 2,
+    "desc": "Ai Portal for Victoria to learn about Artificial Intelligence. Can help with homework, test preperation, knowledge & research. Ability to scan homework and guide the user to solutions.",
+    "builtWith": "Brandon made with Manus ai.",
+    "features": [],
+    "howToUse": "",
+    "url": "https://ailearnhub-ebwcvges.manus.space/",
+    "image": null,
+    "previewMode": "url"
+  },
+  {
+    "slug": "piano-composition-mastery",
+    "title": "Piano Composition Mastery",
+    "subtitle": "30 Day Customized Study Plan to Master Any Composition",
+    "category": "personal",
+    "tier": 1,
+    "desc": "Upload any piano composition into the portal and ai looks up the applicable exercises for finger indepence, strengthening and clarity.  Provides the top 5 you tube videos and respective Hanon exercises.  Split-screen capabilities with built in metronome.  Also has functionality to upload any Spotify share link to music and it scrapes and parses the internet for the sheet music.",
+    "builtWith": "Brandon Rose via vibe coding in Manus.ai",
+    "features": [],
+    "howToUse": "Ask for pdf manual",
+    "url": "https://piano-composition-mastery.manus.space/",
+    "image": null,
+    "previewMode": "url"
   },
   {
     "slug": "propertymax-ai-training-hub",
@@ -331,7 +360,7 @@
       "Automated completion certificate generation"
     ],
     "howToUse": "Open the Training Hub, work through the video and playbook, then complete the quiz to earn a completion certificate.",
-    "url": null,
+    "url": "https://manus.im/share/file/66d72fbd-2504-46be-bee2-1ad3ff5f4fac",
     "image": null,
     "previewStyle": "training-hub"
   }
