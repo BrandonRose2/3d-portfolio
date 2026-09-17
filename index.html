@@ -154,6 +154,20 @@
     cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
   body.edit-mode #addProjectBtn{display:block;}
 
+  /* Mobile-only prev/next nav — a reliable, precise-tap-free way to step through
+     every project card without needing to aim the 3D drag-to-orbit gesture. */
+  #mobile-nav{display:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+    z-index:16;align-items:center;gap:14px;padding:8px 10px;border-radius:999px;
+    background:rgba(10,12,20,0.72);border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);touch-action:manipulation;}
+  #mobile-nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--panel-border);
+    background:rgba(255,255,255,0.06);color:var(--text);font-size:20px;line-height:1;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #mobile-nav button:active{background:rgba(255,255,255,0.16);}
+  #mobile-nav #navLabel{font-size:12px;color:var(--text-dim);min-width:44px;text-align:center;}
+  body.edit-mode #mobile-nav{display:none!important;}
+
   .side-panel{position:fixed;top:0;right:0;height:100%;width:380px;max-width:88vw;
     background:rgba(5,7,12,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
     border-left:1px solid rgba(255,255,255,0.08);z-index:20;
@@ -230,6 +244,7 @@
     body.edit-mode #music-player-container{left:14px;bottom:calc(14px + env(safe-area-inset-bottom));width:calc(100vw - 28px);}
     #music-control input{width:100%;min-height:42px;}
     #addProjectBtn{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));min-height:46px;}
+    #mobile-nav{display:flex;bottom:calc(20px + env(safe-area-inset-bottom));}
   }
   @media (max-width:380px){
     #hud h1{font-size:24px;}
@@ -273,7 +288,7 @@
     <div class="title-block" style="display:flex;align-items:flex-start;">
       <div>
         <h1>Brandon Rose <span>— Portfolio Constellation</span></h1>
-        <p class="hint">Drag to orbit · Scroll to zoom · Click a node to open a project</p>
+        <p class="hint" id="hudHint">Drag to orbit · Scroll to zoom · Click a node to open a project</p>
       </div>
       <button class="pill liquid-glass" id="editToggle">✎ Edit Mode</button>
     </div>
@@ -296,6 +311,12 @@
   <button id="rose-sound-trigger" type="button" aria-label="Start the background soundtrack" title="Start soundtrack"></button>
 
   <button id="addProjectBtn">+ Add Project</button>
+
+  <div id="mobile-nav" aria-label="Browse projects">
+    <button id="navPrev" type="button" aria-label="Previous project">‹</button>
+    <span id="navLabel" aria-live="polite">1 / 1</span>
+    <button id="navNext" type="button" aria-label="Next project">›</button>
+  </div>
 
   <div id="detail-panel" class="side-panel liquid-glass">
     <button class="close-btn" id="closePanel" aria-label="Close">✕</button>
@@ -498,6 +519,10 @@ function applyResponsiveScene(resetCamera = false){
     }
   }
   camera.updateProjectionMatrix();
+  const hint = document.getElementById('hudHint');
+  if (hint) hint.textContent = phoneScene
+    ? 'Drag to orbit · Pinch to zoom · Tap a card, or use ‹ › below'
+    : 'Drag to orbit · Scroll to zoom · Click a node to open a project';
   return layoutChanged;
 }
 applyResponsiveScene(true);
@@ -1209,6 +1234,8 @@ function rebuildScene(){
 
     nodes.push({ card, glow, project: p, baseWidth: width, baseHeight: height });
   });
+  if (navIndex >= nodes.length) navIndex = 0;
+  if (typeof updateNavLabel === 'function') updateNavLabel();
 }
 
 function focusSavedPreview(slug){
@@ -1237,7 +1264,11 @@ let activeCategory = 'all';
 let selectedCard = null;
 let pointerDownPosition = null;
 let pointerDownCard = null;
-const SIDEBAR_CLICK_TOLERANCE = 5;
+// Fingers drift more than a mouse during a tap, so touch gets a much more
+// forgiving tolerance — otherwise legitimate taps get misread as drags and
+// the card never opens.
+const CLICK_TOLERANCE_MOUSE = 5;
+const CLICK_TOLERANCE_TOUCH = 24;
 
 function onPointerMove(e){
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -1266,7 +1297,7 @@ function cardAtPointerEvent(e){
 }
 
 function onPointerDown(e){
-  pointerDownPosition = { x: e.clientX, y: e.clientY };
+  pointerDownPosition = { x: e.clientX, y: e.clientY, type: e.pointerType };
   // The details panel can only open if pointer-down and pointer-up both occur
   // over the same card with virtually no drag movement.
   pointerDownCard = cardAtPointerEvent(e);
@@ -1279,7 +1310,8 @@ function onClick(e){
   pointerDownPosition = null;
   pointerDownCard = null;
   if (!startedHere || !startedOnCard) return;
-  if (Math.hypot(e.clientX - startedHere.x, e.clientY - startedHere.y) > SIDEBAR_CLICK_TOLERANCE) return;
+  const tolerance = startedHere.type === 'touch' ? CLICK_TOLERANCE_TOUCH : CLICK_TOLERANCE_MOUSE;
+  if (Math.hypot(e.clientX - startedHere.x, e.clientY - startedHere.y) > tolerance) return;
   const hit = cardAtPointerEvent(e);
   if (hit !== startedOnCard) return;
   if (!hit) return;
@@ -1287,6 +1319,8 @@ function onClick(e){
     openEditForm(hit.userData.project);
   } else {
     selectedCard = hit;
+    navIndex = nodes.findIndex(n => n.card === hit);
+    updateNavLabel();
     // The right sidebar may only be populated from this explicit card click.
     openPanel(hit.userData.project, 'card-click');
   }
@@ -1364,6 +1398,28 @@ document.getElementById('closePanel').addEventListener('click', () => {
   selectedCard = null;
   markInteracting();
 });
+
+/* ---------------------------------------------------------------------
+   MOBILE PREV/NEXT NAV — a guaranteed, precise-tap-free way to step
+   through every project in order, since aiming the 3D drag-to-orbit at a
+   specific small card is much harder with a finger than a mouse.
+--------------------------------------------------------------------- */
+let navIndex = 0;
+const navLabel = document.getElementById('navLabel');
+function updateNavLabel(){
+  if (navLabel) navLabel.textContent = nodes.length ? `${navIndex + 1} / ${nodes.length}` : '0 / 0';
+}
+function goToProjectIndex(i){
+  if (!nodes.length) return;
+  navIndex = ((i % nodes.length) + nodes.length) % nodes.length;
+  const node = nodes[navIndex];
+  selectedCard = node.card;
+  openPanel(node.project, 'card-click');
+  updateNavLabel();
+  markInteracting();
+}
+document.getElementById('navPrev')?.addEventListener('click', () => goToProjectIndex(navIndex - 1));
+document.getElementById('navNext')?.addEventListener('click', () => goToProjectIndex(navIndex + 1));
 
 /* ---------------------------------------------------------------------
    EDIT MODE — add/edit/remove projects, persisted to localStorage.
