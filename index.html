@@ -1131,9 +1131,17 @@ function applyPreviewTexture(card, p){
   card.material.map = useUrlPreview ? makeUrlPreviewTexture(p) : makePlaceholderTexture(p);
   card.material.needsUpdate = true;
 
-  const imageUrl = useUrlPreview
-    ? getLiveThumbnailUrl(p.url)
-    : (p.image || `./screenshots/${p.slug}.png`);
+  // Load order for live-link cards: a committed snapshot in screenshots/live/
+  // (instant, always works) and then the thum.io capture service as a fallback
+  // for newly added projects that don't have a snapshot yet.
+  const candidates = useUrlPreview
+    ? [`./screenshots/live/${p.slug}.jpg`, getLiveThumbnailUrl(p.url)]
+    : [p.image || `./screenshots/${p.slug}.png`];
+  loadPreviewCandidate(card, p, useUrlPreview, candidates.filter(Boolean));
+}
+
+function loadPreviewCandidate(card, p, useUrlPreview, candidates){
+  const imageUrl = candidates.shift();
   if (!imageUrl) return;
 
   textureLoader.load(
@@ -1150,7 +1158,11 @@ function applyPreviewTexture(card, p){
     },
     undefined,
     () => {
-      // Keep the generated live-link card if a remote site blocks capture or the image is unavailable.
+      // Try the next source; if none load, keep the generated live-link card.
+      if (candidates.length && card.userData.project === p) {
+        loadPreviewCandidate(card, p, useUrlPreview, candidates);
+        return;
+      }
       card.material.needsUpdate = true;
     }
   );
